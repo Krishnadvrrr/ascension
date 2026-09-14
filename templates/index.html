@@ -463,7 +463,10 @@
   <!-- Add Custom Quest Modal -->
   <div id="add-quest-modal" class="modal-overlay hidden">
     <div class="modal-content panel-glow">
-      <div class="system-badge">[ REGISTER NEW OBJECTIVE ]</div>
+      <div class="gate-header-banner">
+        <div class="system-badge">[ REGISTER NEW OBJECTIVE ]</div>
+        <button type="button" class="close-modal-x" onclick="closeCustomQuestModal()" title="Close">✕</button>
+      </div>
       <h2 class="modal-title">CUSTOM QUEST PROTOCOL</h2>
       <form id="custom-task-form" onsubmit="submitCustomQuest(event)">
         <div class="form-group">
@@ -602,6 +605,7 @@
     <div class="modal-content panel-glow onboarding-panel">
       <div class="gate-header-banner">
         <div class="system-badge">[ SYSTEM AWAKENING // HUNTER DIRECTIVES ]</div>
+        <button type="button" class="close-modal-x" onclick="closeOnboardingModal()" title="Close Wizard">✕</button>
       </div>
       <h2 class="modal-title onboarding-title">CONFIGURE YOUR LIFE PROTOCOL</h2>
       <p class="onboarding-desc">The System is built for students managing Gym + Academics + Extra Skill mastery.</p>
@@ -683,9 +687,11 @@
           </div>
         </div>
 
-        <button type="button" class="system-btn primary-btn next-step-btn" onclick="goToOnboardStep(2)">
-          PROCEED TO GYM & NUTRITION PROTOCOL →
-        </button>
+        <div class="onboard-footer-pinned">
+          <button type="button" class="system-btn primary-btn next-step-btn" onclick="goToOnboardStep(2)">
+            PROCEED TO GYM & NUTRITION PROTOCOL →
+          </button>
+        </div>
       </div>
 
       <!-- STEP 2: Custom Gym Split Builder & Body Trajectory -->
@@ -722,9 +728,11 @@
           </div>
         </div>
 
-        <div class="onboard-nav-row">
-          <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(1)">← BACK</button>
-          <button type="button" class="system-btn primary-btn" onclick="goToOnboardStep(3)">PROCEED TO EXTRA SKILL →</button>
+        <div class="onboard-footer-pinned">
+          <div class="onboard-nav-row">
+            <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(1)">← BACK</button>
+            <button type="button" class="system-btn primary-btn" onclick="goToOnboardStep(3)">PROCEED TO EXTRA SKILL →</button>
+          </div>
         </div>
       </div>
 
@@ -766,11 +774,13 @@
           </div>
         </div>
 
-        <div class="onboard-nav-row" style="margin-top: 18px;">
-          <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(2)">← BACK</button>
-          <button type="button" class="system-btn primary-btn" onclick="submitOnboardingDirectives()">
-            ⚡ AWAKEN & COMMENCE DISCIPLINE
-          </button>
+        <div class="onboard-footer-pinned">
+          <div class="onboard-nav-row">
+            <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(2)">← BACK</button>
+            <button type="button" class="system-btn primary-btn" onclick="submitOnboardingDirectives()">
+              ⚡ AWAKEN & COMMENCE DISCIPLINE
+            </button>
+          </div>
         </div>
       </div>
     </div>

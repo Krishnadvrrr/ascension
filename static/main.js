@@ -1308,7 +1308,12 @@ function goToOnboardStep(stepNum) {
     const tab = document.getElementById(`step-tab-${i}`);
     const step = document.getElementById(`onboard-step-${i}`);
     if (tab) tab.classList.toggle("active", i === stepNum);
-    if (step) step.classList.toggle("hidden", i !== stepNum);
+    if (step) {
+      step.classList.toggle("hidden", i !== stepNum);
+      if (i === stepNum) {
+        step.scrollTop = 0;
+      }
+    }
   }
   if (stepNum === 2) {
     const container = document.getElementById("split-days-editor");
@@ -2153,6 +2158,27 @@ async function loadLogBookHistory() {
   }
 }
 
+// Global Modal Backdrop Click & Escape Key Handler
+function initModalOverlayControls() {
+  document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", (e) => {
+      // If user clicked directly on the dark backdrop (not inside modal-content)
+      if (e.target === overlay) {
+        overlay.classList.add("hidden");
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const openModals = document.querySelectorAll(".modal-overlay:not(.hidden)");
+      if (openModals.length > 0) {
+        openModals[openModals.length - 1].classList.add("hidden");
+      }
+    }
+  });
+}
+
 // 13. DOM Ready Initialization
 document.addEventListener("DOMContentLoaded", () => {
   initBackgroundSlideshow();
@@ -2166,6 +2192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkTodayLogBookStatus();
   updateDirectivesPreview();
   initCreatorIntro();
+  initModalOverlayControls();
 
   // Check if hunter is cached
   const savedProfile = JSON.parse(localStorage.getItem("hunter_profile"));

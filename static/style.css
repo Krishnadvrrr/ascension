@@ -329,21 +329,67 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 30px 16px;
   z-index: 200;
+  box-sizing: border-box;
 }
 
 .modal-overlay.hidden {
-  display: none;
+  display: none !important;
 }
 
 .modal-content {
-  width: 90%;
+  width: 92%;
   max-width: 480px;
+  margin: auto;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.gate-header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.close-modal-x {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  color: #d8b4fe;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.close-modal-x:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  transform: scale(1.08);
 }
 
 .modal-title {
@@ -1843,13 +1889,36 @@ body.in-red-gate .bg-overlay {
    11. FIRST-TIME ONBOARDING WIZARD
    ========================================= */
 .onboarding-panel {
-  max-width: 620px !important;
+  max-width: 640px !important;
+  width: 95% !important;
+  max-height: min(88vh, 820px);
+  max-height: min(88dvh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px 24px 16px !important;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+.onboarding-title {
+  flex-shrink: 0;
+  margin-bottom: 6px;
+  font-size: 1.25rem;
+}
+
+.onboarding-desc {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: #d8b4fe;
 }
 
 .onboarding-steps-row {
   display: flex;
   gap: 8px;
-  margin: 16px 0 20px;
+  margin: 0 0 16px 0;
+  flex-shrink: 0;
 }
 
 .step-chip {
@@ -1857,12 +1926,15 @@ body.in-red-gate .bg-overlay {
   text-align: center;
   font-family: 'Share Tech Mono', monospace;
   font-size: 0.75rem;
-  padding: 8px;
+  padding: 8px 4px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(192, 132, 252, 0.25);
   color: var(--text-muted);
   border-radius: 3px;
   transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .step-chip.active {
@@ -1870,6 +1942,71 @@ body.in-red-gate .bg-overlay {
   border-color: var(--cyan-primary);
   color: #fff;
   box-shadow: 0 0 14px rgba(168, 85, 247, 0.4);
+}
+
+.onboard-step-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboard-step-content.hidden {
+  display: none !important;
+}
+
+.onboard-step-content::-webkit-scrollbar {
+  width: 6px;
+}
+.onboard-step-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+.onboard-step-content::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+  border-radius: 3px;
+}
+
+.step-subheading {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.88rem;
+  color: #38bdf8;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.onboard-footer-pinned {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(14, 6, 28, 0.8) 0%, rgba(14, 6, 28, 0.98) 40%, #0e061c 100%);
+  backdrop-filter: blur(8px);
+  padding: 12px 0 4px 0;
+  margin-top: auto;
+  border-top: 1px solid rgba(192, 132, 252, 0.25);
+  z-index: 10;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.onboard-nav-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.onboard-nav-row .system-btn {
+  margin-top: 0;
+  flex: 1;
+}
+
+.onboard-footer-pinned .next-step-btn {
+  margin-top: 0;
+  width: 100%;
 }
 
 .goal-selection-grid {
@@ -1955,18 +2092,30 @@ body.in-red-gate .bg-overlay {
 .split-days-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 320px;
+  gap: 8px;
+  max-height: 220px;
   overflow-y: auto;
-  margin-bottom: 20px;
-  padding-right: 4px;
+  margin-bottom: 16px;
+  padding-right: 6px;
+  border: 1px solid rgba(192, 132, 252, 0.15);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px;
+}
+
+.split-days-container::-webkit-scrollbar {
+  width: 5px;
+}
+.split-days-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.4);
+  border-radius: 3px;
 }
 
 .split-day-row {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(14, 6, 28, 0.65);
   border: 1px solid rgba(192, 132, 252, 0.25);
   border-radius: 4px;
-  padding: 10px 14px;
+  padding: 8px 12px;
 }
 
 .split-day-top {
@@ -1978,7 +2127,7 @@ body.in-red-gate .bg-overlay {
 
 .split-day-title {
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #fff;
 }
 
@@ -1987,7 +2136,7 @@ body.in-red-gate .bg-overlay {
   align-items: center;
   gap: 6px;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #38bdf8;
   cursor: pointer;
 }
@@ -1999,16 +2148,10 @@ body.in-red-gate .bg-overlay {
   color: #fff;
   padding: 6px 10px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   border-radius: 3px;
   outline: none;
-}
-
-.onboard-nav-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
+  box-sizing: border-box;
 }
 
 /* =========================================
@@ -2016,6 +2159,11 @@ body.in-red-gate .bg-overlay {
    ========================================= */
 .calendar-panel {
   max-width: 620px !important;
+  width: 95% !important;
+  max-height: min(88vh, 850px);
+  max-height: min(88dvh, 850px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .today-split-card {
@@ -2403,6 +2551,11 @@ body.in-red-gate .bg-overlay {
    ========================================= */
 .manage-quests-panel {
   max-width: 650px !important;
+  width: 95% !important;
+  max-height: min(88vh, 850px);
+  max-height: min(88dvh, 850px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .quota-summary-box {
@@ -2548,6 +2701,26 @@ body.in-red-gate .bg-overlay {
    ========================================= */
 .logbook-panel {
   max-width: 680px !important;
+  width: 95% !important;
+  max-height: min(88vh, 850px);
+  max-height: min(88dvh, 850px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px 24px 16px !important;
+  box-sizing: border-box;
+}
+
+.logbook-tab-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 6px;
+}
+
+.logbook-tab-content.hidden {
+  display: none !important;
 }
 
 .logbook-title {
@@ -4103,31 +4276,48 @@ body.in-red-gate .bg-overlay {
 
   /* 9. All Modals Mobile Optimization */
   .modal-overlay {
-    padding: 10px !important;
-    align-items: center !important;
+    padding: 12px 8px !important;
+    align-items: flex-start !important;
     justify-content: center !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     z-index: 1500 !important;
   }
 
   .modal-content {
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 90dvh !important;
+    margin: auto !important;
+    max-height: calc(100dvh - 24px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
-    padding: 18px 14px !important;
+    padding: 16px 12px !important;
     border-radius: 8px !important;
   }
 
+  .onboarding-panel,
+  .logbook-panel {
+    max-height: calc(100dvh - 24px) !important;
+    padding: 14px 12px !important;
+  }
+
+  .onboard-footer-pinned {
+    padding: 10px 0 2px 0 !important;
+  }
+
+  .split-days-container {
+    max-height: 180px !important;
+  }
+
   .close-modal-x {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.2rem !important;
+    font-size: 1.15rem !important;
   }
 
   .form-row {
