@@ -1,15 +1,35 @@
 import json
+import sqlite3
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# Database configuration
+# Database configuration with concurrency optimization for multiple users
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///discipline_tracker.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {
+        'timeout': 30,  # Wait up to 30s for lock to clear
+        'check_same_thread': False
+    },
+    'pool_pre_ping': True
+}
 
 db = SQLAlchemy(app)
+
+# Enable SQLite Write-Ahead Logging (WAL) for high concurrency
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 
 # ========================
 # RANK & XP PROGRESSION MATH
