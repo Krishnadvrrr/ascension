@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>ASCENSION - Hunter Status & Discipline</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Fullscreen Wallpaper Slideshow Layers -->
+  <div id="bg-slideshow" class="bg-slideshow"></div>
+  <div class="bg-overlay"></div>
+  <div class="scanline-overlay"></div>
+
+  <!-- Opening Gate Transition Elements -->
+  <div id="opening-gate-overlay" class="opening-gate-overlay hidden">
+    <div class="gate-blade gate-top"></div>
+    <div class="gate-seam-laser"></div>
+    <div class="gate-blade gate-bottom"></div>
+  </div>
+
+  <!-- Real-time Mana Flame Canvas Overlay -->
+  <canvas id="mana-particle-canvas"></canvas>
+
+  <!-- Manhwa Holographic System Notification Toast Container -->
+  <div id="system-hologram-container" class="system-hologram-container"></div>
+
+  <!-- 0. 3D CREATOR INTRO POPUP (2.5 - 3s Clip / Holographic Awakening) -->
+  <div id="creator-intro-stage" class="creator-intro-stage">
+    <div class="creator-intro-backdrop"></div>
+    <div class="creator-3d-scene">
+      <!-- Outer Rotating Mana Rings -->
+      <div class="creator-mana-ring-outer"></div>
+      <div class="creator-mana-ring-inner"></div>
+
+      <!-- 3D Holographic Floating Card -->
+      <div class="creator-card-3d" id="creator-card-3d">
+        <div class="creator-scanline-light"></div>
+        <div class="creator-corner-tag top-left">ASCENSION // ARCHITECT</div>
+        <div class="creator-corner-tag bottom-right">v2.0 // AWAKENED</div>
+
+        <div class="creator-directive-tag">✦ SYSTEM ARCHITECT IDENTIFIED ✦</div>
+        <h2 class="creator-welcome-heading">WELCOME TO ASCENSION</h2>
+
+        <!-- Circular Instagram-Style Avatar with 3D Holographic Orbit -->
+        <div class="creator-avatar-pod">
+          <div class="creator-insta-ring"></div>
+          <div class="creator-avatar-circle">
+            <img src="{{ url_for('static', filename='images/creator_pfp.jpg') }}" alt="Krishna - System Architect" class="creator-pfp-img" />
+            <div class="creator-pfp-glare"></div>
+          </div>
+          <div class="creator-avatar-pulse"></div>
+        </div>
+
+        <div class="creator-meta-box">
+          <span class="creator-subtitle">CREATED & ARCHITECTED BY</span>
+          <a href="https://instagram.com/krishnadvrr" target="_blank" rel="noopener noreferrer" class="creator-insta-badge" id="creator-insta-link" title="Open Krishna's Instagram Profile">
+            <svg class="insta-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span class="insta-handle">@krishnadvrr</span>
+            <span class="insta-verified-check">✓</span>
+          </a>
+        </div>
+
+        <!-- 2.5 - 3 Second Progress Bar -->
+        <div class="creator-progress-track">
+          <div class="creator-progress-bar" id="creator-progress-bar"></div>
+        </div>
+
+        <!-- Enter / Skip Action -->
+        <div class="creator-action-row">
+          <button type="button" class="creator-enter-btn" onclick="dismissCreatorIntro()">
+            <span class="btn-scan"></span>
+            ENTER SYSTEM [ESC] ⚡
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 3D COMPACT LOGIN GATEWAY (Interactive 3D Parallax Tilt, Anime Faces 100% Open) -->
+  <section id="login-gateway" class="login-gateway compact-mode">
+    <div class="login-card panel-glow compact-card" id="tilt-login-card">
+      <div class="card-specular-shine"></div>
+      <div class="card-3d-ambient-glow"></div>
+      <div class="card-3d-content">
+        <div class="system-badge">[ ASCENSION // IDENT 001 ]</div>
+        <h1 class="login-title">WELCOME BACK</h1>
+        <p class="login-subtitle">ASCENSION PROTOCOL AUTHENTICATION</p>
+        
+        <!-- Google One-Click Authentication Button -->
+        <div class="google-auth-wrapper">
+          <button type="button" id="btn-google-login" class="google-hunter-btn" onclick="triggerGoogleSignIn()">
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>CONTINUE WITH GOOGLE</span>
+          </button>
+        </div>
+
+        <div class="auth-divider">
+          <span class="auth-divider-line"></span>
+          <span class="auth-divider-text">OR HUNTER CODENAME</span>
+          <span class="auth-divider-line"></span>
+        </div>
+
+        <form id="login-form" onsubmit="handleHunterAuth(event)">
+        <div class="form-group compact-group">
+          <div class="input-wrapper compact-input">
+            <span class="input-prefix">ID_</span>
+            <input 
+              type="text" 
+              id="login-username" 
+              name="username" 
+              placeholder="Hunter Codename" 
+              required 
+              autocomplete="username" 
+              value="Sung Jin-Woo"
+            />
+          </div>
+        </div>
+
+        <div class="form-group compact-group">
+          <div class="input-wrapper compact-input">
+            <span class="input-prefix">KEY_</span>
+            <input 
+              type="password" 
+              id="login-password" 
+              name="password" 
+              placeholder="Passcode" 
+              required 
+              autocomplete="current-password" 
+              value="hunter123"
+            />
+          </div>
+        </div>
+
+        <div id="login-feedback" class="login-feedback hidden"></div>
+
+        <button type="submit" id="btn-login" class="system-btn primary-btn compact-btn">
+          <span class="btn-glow-line"></span>
+          <span class="btn-text">AUTHENTICATE ⚡</span>
+        </button>
+
+        <div class="login-meta-row compact-meta">
+          <span class="meta-tag">GATE READY</span>
+          <button type="button" class="switch-mode-btn" onclick="quickRegisterDemo()">
+            + AWAKEN
+          </button>
+        </div>
+
+        <div class="creator-mini-credit" onclick="reopenCreatorIntro()">
+          <span>ARCHITECT // <b style="color: #ff3377;">@krishnadvrr</b> ✦</span>
+        </div>
+      </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FULLSCREEN 3D WELCOME CINEMATIC OVERLAY -->
+  <div id="cinematic-3d-stage" class="cinematic-3d-stage hidden">
+    <div class="grid-3d-floor"></div>
+    <div class="cinematic-lens-flare"></div>
+    
+    <div class="cinematic-3d-wrapper">
+      <div class="system-voice-tag">[ SYSTEM DIRECTIVE ACTIVATED ]</div>
+      
+      <!-- 3D Extruded Anamorphic Text -->
+      <div class="scene-3d">
+        <h1 class="text-3d-massive" data-text="WELCOME BACK, SIR">
+          WELCOME BACK, SIR
+        </h1>
+      </div>
+
+      <div class="hunter-salute-tag" id="cinematic-hunter-name">
+        HUNTER // SUNG JIN-WOO
+      </div>
+
+      <div class="system-hologram-loader">
+        <div class="loader-track">
+          <div class="loader-laser"></div>
+        </div>
+        <span class="loader-status">SYNCHRONIZING HUNTER CORE ATTRIBUTES...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.5 MOBILE SYSTEM SLIDE-OUT DRAWER (Opened via ☰ Three-Line Symbol) -->
+  <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop hidden" onclick="closeMobileDrawer()"></div>
+  <aside id="mobile-system-drawer" class="mobile-system-drawer">
+    <div class="drawer-header">
+      <div class="drawer-hunter-info">
+        <div class="drawer-avatar-badge">⚡</div>
+        <div class="drawer-title-wrap">
+          <div class="drawer-hunter-name" id="drawer-hunter-name">SUNG JIN-WOO</div>
+          <div class="drawer-hunter-rank" id="drawer-hunter-rank">E-RANK HUNTER</div>
+        </div>
+      </div>
+      <button type="button" class="drawer-close-btn" onclick="closeMobileDrawer()" aria-label="Close Navigation Menu">✕</button>
+    </div>
+
+    <!-- Quick Metrics Strip inside Drawer -->
+    <div class="drawer-stats-strip">
+      <div class="drawer-stat-chip">
+        <span class="drawer-stat-label">STREAK</span>
+        <span class="drawer-stat-val" id="drawer-streak-val">🔥 0 DAYS</span>
+      </div>
+      <div class="drawer-stat-chip">
+        <span class="drawer-stat-label">WEIGHT</span>
+        <span class="drawer-stat-val" id="drawer-weight-val">⚖ 75.0 KG</span>
+      </div>
+      <div class="drawer-stat-chip">
+        <span class="drawer-stat-label">LEVEL</span>
+        <span class="drawer-stat-val" id="drawer-level-val">LV. 01</span>
+      </div>
+    </div>
+
+    <!-- Full Navigation Menu List -->
+    <div class="drawer-menu-list">
+      <!-- 1. Highlighted Top Action: Daily Log Book -->
+      <button type="button" class="drawer-menu-item primary-log-item" onclick="closeMobileDrawer(); openLogBookModal();">
+        <span class="menu-item-icon">📖</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">DAILY LOG BOOK</span>
+          <span class="menu-item-subtitle">+30 EXP • Submit Daily Chronicle</span>
+        </div>
+        <span class="menu-item-badge alert-badge">MANDATE</span>
+      </button>
+
+      <!-- 2. 7-Day Split & 21-Day Streak Calendar -->
+      <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openSplitCalendarModal();">
+        <span class="menu-item-icon">📅</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">SPLIT & CALENDAR</span>
+          <span class="menu-item-subtitle">7-Day Regimen & 21-Day Streak</span>
+        </div>
+        <span class="menu-item-arrow">➔</span>
+      </button>
+
+      <!-- 3. Manage Quests -->
+      <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openManageQuestsModal();">
+        <span class="menu-item-icon">⚙</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">MANAGE QUESTS</span>
+          <span class="menu-item-subtitle">Customize 5+ Directives</span>
+        </div>
+        <span class="menu-item-arrow">➔</span>
+      </button>
+
+      <!-- 4. Red Gate Sanctuary -->
+      <button type="button" class="drawer-menu-item red-gate-item" onclick="closeMobileDrawer(); openRedGateModal();">
+        <span class="menu-item-icon">⛩</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">RED GATE SANCTUARY</span>
+          <span class="menu-item-subtitle">Pomodoro Focus Dungeon</span>
+        </div>
+        <span class="menu-item-arrow">➔</span>
+      </button>
+
+      <!-- 5. Shadow Army -->
+      <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openShadowArmyModal();">
+        <span class="menu-item-icon">👥</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">SHADOW ARMY</span>
+          <span class="menu-item-subtitle">Extraction & Passive Buffs</span>
+        </div>
+        <span class="menu-item-badge" id="drawer-shadow-badge">1</span>
+      </button>
+
+      <!-- 6. Inventory -->
+      <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openInventoryModal();">
+        <span class="menu-item-icon">🎒</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">HUNTER INVENTORY</span>
+          <span class="menu-item-subtitle">Artifacts & Weapon Drops</span>
+        </div>
+        <span class="menu-item-arrow">➔</span>
+      </button>
+
+      <!-- 7. Voice Toggle -->
+      <button type="button" class="drawer-menu-item" onclick="toggleSystemVoice(); syncDrawerVoiceStatus();">
+        <span class="menu-item-icon" id="drawer-voice-icon">🔊</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">SYSTEM VOICE</span>
+          <span class="menu-item-subtitle" id="drawer-voice-status">Voice: ON</span>
+        </div>
+      </button>
+
+      <!-- 8. Re-login / Switch Account -->
+      <button type="button" class="drawer-menu-item logout-item" onclick="closeMobileDrawer(); logoutHunter();">
+        <span class="menu-item-icon">↩</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">RE-LOGIN / LOGOUT</span>
+          <span class="menu-item-subtitle">Switch Hunter Codename</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="drawer-footer">
+      <span class="drawer-credit">ARCHITECT // <b style="color: #ff3377;">@krishnadvrr</b> ✦</span>
+    </div>
+  </aside>
+
+  <!-- 3. SPLIT HUNTER HUD (Hanging Blocks Along Edges on PC / Responsive Native Flow on Mobile) -->
+  <main id="hud-container" class="hud-split-screen hidden">
+    <!-- Top Bar Hanging Header -->
+    <header class="hud-top-bar panel-glow">
+      <div class="top-bar-left">
+        <!-- Three-Line Symbol (☰) Hamburger Menu for Mobile Phones -->
+        <button type="button" id="mobile-hamburger-btn" class="mobile-hamburger-btn" onclick="toggleMobileDrawer()" aria-label="Open Navigation Drawer" title="Open System Menu">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
+
+        <div class="top-bar-identity">
+          <div class="system-badge">[ ASCENSION ONLINE ]</div>
+          <div class="player-rank-tag">RANK: <span id="player-rank">E-RANK HUNTER</span></div>
+          <div class="header-metrics-sub">
+            <span class="hud-meta-badge" id="hud-weight-tag">⚖ 75.0 KG</span>
+            <span class="hud-meta-badge streak-flame-tag" id="hud-streak-tag">🔥 0 DAYS</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-bar-center">
+        <h1 class="player-greeting" id="player-greeting">WELCOME BACK, SIR</h1>
+      </div>
+
+      <!-- Mobile Quick Logbook Button (Visible only on mobile header) -->
+      <div class="mobile-header-actions">
+        <button type="button" class="mobile-top-logbook-btn" onclick="openLogBookModal()" title="Daily Log Book">
+          <span class="logbook-icon">📖</span>
+          <span class="log-txt">LOG</span>
+          <span id="mobile-logbook-dot" class="logbook-dot alert">●</span>
+        </button>
+      </div>
+
+      <!-- Desktop Action Buttons (Visible on desktop PC) -->
+      <div class="top-bar-right desktop-action-bar">
+        <button type="button" class="hud-action-btn logbook-btn" id="btn-open-logbook" onclick="openLogBookModal()" title="Daily Hunter Chronicle / Experience Log">
+          <span class="logbook-icon">📖</span> LOG BOOK <span id="logbook-status-dot" class="logbook-dot alert">●</span>
+        </button>
+        <button type="button" class="hud-action-btn calendar-btn" onclick="openSplitCalendarModal()" title="Gym Split & 21-Day Calendar">
+          <span class="cal-icon">📅</span> SPLIT & CALENDAR
+        </button>
+        <button type="button" class="hud-action-btn red-gate-btn" onclick="openRedGateModal()" title="Enter Deep Work Dungeon">
+          <span class="gate-pulsing-icon">⛩</span> RED GATE
+        </button>
+        <button type="button" class="hud-action-btn arise-btn" onclick="openShadowArmyModal()" title="Shadow Army & Extraction">
+          <span class="shadow-icon">👥</span> SHADOWS (<span id="shadow-count-badge">1</span>)
+        </button>
+        <button type="button" class="hud-action-btn inventory-btn" onclick="openInventoryModal()" title="Item Inventory & Drops">
+          <span class="inv-icon">🎒</span> INVENTORY
+        </button>
+        <button type="button" class="hud-action-btn voice-toggle-btn" id="voice-toggle-btn" onclick="toggleSystemVoice()" title="Toggle Robotic System Voice">
+          <span id="voice-icon">🔊</span> VOICE: ON
+        </button>
+        <button type="button" class="system-logout-btn" onclick="logoutHunter()">[ ↩ RE-LOGIN ]</button>
+      </div>
+    </header>
+
+    <!-- Left Wing: Hanging Attributes Panel (Gym, Academics, Discipline, Recovery) -->
+    <aside class="hud-wing-left panel-glow">
+      <div class="panel-header-row">
+        <h2 class="section-title">ATTRIBUTES</h2>
+        <span class="status-indicator">● ACTIVE</span>
+      </div>
+      <div class="stat-row" title="Physical Strength, Heavy Compound Lifts & Gym PRs">
+        <span class="stat-name">STR <small class="stat-tag">GYM</small></span>
+        <span class="stat-val" id="stat-str">10</span>
+      </div>
+      <div class="stat-row" title="Cognitive Endurance, Deep Study & Academic Performance">
+        <span class="stat-name">INT <small class="stat-tag">STUDY</small></span>
+        <span class="stat-val" id="stat-agi">10</span>
+      </div>
+      <div class="stat-row" title="Daily Consistency, Habit Adherence & Willpower">
+        <span class="stat-name">DIS <small class="stat-tag">HABITS</small></span>
+        <span class="stat-val" id="stat-vit">10</span>
+      </div>
+      <div class="stat-row" title="Sleep Optimization, Hydration & Tissue Recovery">
+        <span class="stat-name">REC <small class="stat-tag">SLEEP</small></span>
+        <span class="stat-val" id="stat-end">10</span>
+      </div>
+
+      <div class="quote-terminal-box">
+        <div class="quote-terminal-header">[ SYSTEM ADVISORY ]</div>
+        <p id="motivational-quote" class="quote-text">
+          "Discipline in the gym fuels focus at your desk. Rise above stagnation."
+        </p>
+      </div>
+    </aside>
+
+    <!-- Right Wing: Hanging Daily Quests Panel -->
+    <aside class="hud-wing-right panel-glow">
+      <div class="quest-alert-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="warning-icon">⚠</span>
+          <h2>DAILY QUESTS</h2>
+        </div>
+        <button type="button" class="quest-header-btn" onclick="openManageQuestsModal()" title="Manage / Edit Quests (Min 2 Gym, 2 Academics, 1 ECC)">
+          ⚙ MANAGE
+        </button>
+      </div>
+      <p class="penalty-warning">[STUDENT DISCIPLINE // GYM • ACADEMICS • SKILL]</p>
+      
+      <!-- Mobile-Only Prominent Log Book Direct Action Card -->
+      <div class="mobile-log-cta-card" onclick="openLogBookModal()">
+        <div class="mobile-log-cta-left">
+          <span class="mobile-cta-icon">📖</span>
+          <div class="mobile-cta-texts">
+            <span class="mobile-cta-title">WRITE TODAY'S LOG BOOK</span>
+            <span class="mobile-cta-desc">Record gym & study to claim <strong>+30 EXP</strong></span>
+          </div>
+        </div>
+        <span class="mobile-cta-btn">LOG ➔</span>
+      </div>
+
+      <ul class="task-list" id="task-list"></ul>
+      
+      <div class="quest-footer-row">
+        <button type="button" class="system-btn-secondary" onclick="openManageQuestsModal()">
+          ⚙ EDIT / MANAGE QUESTS
+        </button>
+      </div>
+    </aside>
+
+    <!-- Bottom Dock: Hanging XP Bar & Hunter Stats -->
+    <footer class="hud-bottom-dock panel-glow">
+      <div class="dock-meta-row">
+        <div>
+          <span class="label">PLAYER:</span>
+          <span class="value name" id="player-name">SUNG JIN-WOO</span>
+        </div>
+        <div>
+          <span class="label">TITLE:</span>
+          <span class="value goal-tag" id="display-goal">SHADOW MONARCH</span>
+        </div>
+        <div>
+          <span class="label">LEVEL:</span>
+          <span class="value level" id="player-level">01</span>
+        </div>
+      </div>
+
+      <!-- XP Bar -->
+      <div class="xp-container">
+        <div class="xp-labels">
+          <span>EXP</span>
+          <span id="xp-text">0 / 100 XP</span>
+        </div>
+        <div class="xp-bar-bg">
+          <div class="xp-bar-fill" id="xp-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Add Custom Quest Modal -->
+  <div id="add-quest-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow">
+      <div class="system-badge">[ REGISTER NEW OBJECTIVE ]</div>
+      <h2 class="modal-title">CUSTOM QUEST PROTOCOL</h2>
+      <form id="custom-task-form" onsubmit="submitCustomQuest(event)">
+        <div class="form-group">
+          <label>QUEST NAME / TASK</label>
+          <input type="text" id="custom-task-name" placeholder="e.g. 100 Push-ups, 1hr Coding, Read 20 pages" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>AREA</label>
+            <select id="custom-task-area">
+              <option value="fitness">Fitness / Physical</option>
+              <option value="academics">Academics / Study</option>
+              <option value="discipline">Discipline / Routine</option>
+              <option value="hobbies">Skill / Hobby</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>DIFFICULTY (XP)</label>
+            <select id="custom-task-difficulty">
+              <option value="easy">Easy (+10 XP)</option>
+              <option value="medium" selected>Medium (+25 XP)</option>
+              <option value="hard">Hard (+50 XP)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-btn-row">
+          <button type="submit" class="system-btn primary-btn">ACCEPT QUEST</button>
+          <button type="button" class="system-btn cancel-btn" onclick="closeCustomQuestModal()">CANCEL</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. RED GATE FOCUS DUNGEON MODAL (Deep Work Pomodoro) -->
+  <div id="red-gate-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow red-gate-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge red-badge">[ EMERGENCY PROTOCOL // RANK-A GATE ]</div>
+        <button type="button" class="close-modal-x" onclick="closeRedGateModal()">✕</button>
+      </div>
+      <h2 class="modal-title red-gate-title">RED GATE: FOCUS SANCTUARY</h2>
+      <p class="red-gate-desc">Lock into deep work. Defeat the Dungeon Boss by conquering your focus duration.</p>
+
+      <!-- Preset Duration Chips -->
+      <div class="gate-presets-row">
+        <button type="button" class="gate-preset-btn active" onclick="setGateDuration(25, this)">25 MIN (STANDARD)</button>
+        <button type="button" class="gate-preset-btn" onclick="setGateDuration(50, this)">50 MIN (EXTREME)</button>
+        <button type="button" class="gate-preset-btn" onclick="setGateDuration(15, this)">15 MIN (SPRINT)</button>
+      </div>
+
+      <!-- Giant Digital Timer Countdown -->
+      <div class="red-gate-clock-wrapper">
+        <div class="red-gate-clock-ring"></div>
+        <div id="red-gate-timer-display" class="red-gate-timer-digits">25:00</div>
+        <div class="boss-hp-label">DUNGEON BOSS INTEGRITY</div>
+        <div class="boss-hp-bar-bg">
+          <div id="boss-hp-fill" class="boss-hp-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <div class="red-gate-btn-row">
+        <button type="button" id="btn-gate-start" class="system-btn red-gate-action-btn" onclick="startRedGateRaid()">
+          ⚡ COMMENCE RAID
+        </button>
+        <button type="button" id="btn-gate-pause" class="system-btn red-gate-pause-btn hidden" onclick="pauseRedGateRaid()">
+          ⏸ PAUSE
+        </button>
+        <button type="button" id="btn-gate-forfeit" class="system-btn red-gate-forfeit-btn hidden" onclick="forfeitRedGateRaid()">
+          🩸 FORFEIT (PENALTY)
+        </button>
+      </div>
+
+      <div class="penalty-warning-footer">
+        ⚠ WARNING: Forfeiting before timer elapses triggers the System Penalty Advisory.
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. "ARISE" SHADOW ARMY MODAL -->
+  <div id="shadow-army-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow shadow-realm-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge shadow-badge">[ MONARCH AUTHORITY // SHADOW REALM ]</div>
+        <button type="button" class="close-modal-x" onclick="closeShadowArmyModal()">✕</button>
+      </div>
+      <h2 class="modal-title shadow-title">SHADOW ARMY CAVALRY</h2>
+      <p class="shadow-desc">Extracted shadows grant passive discipline buffs and empower all quest XP.</p>
+
+      <!-- Big Glowing Arise Summon Button -->
+      <div class="arise-action-container">
+        <button type="button" id="btn-arise-command" class="arise-summon-btn" onclick="triggerAriseCinematic()">
+          <span class="arise-flame-icon">🔥</span>
+          <span class="arise-text">ARISE</span>
+          <span class="arise-subtext">[ EXTRACT NEW SHADOW SOLDIER ]</span>
+        </button>
+      </div>
+
+      <!-- Shadow Soldiers Grid -->
+      <div class="shadow-soldiers-grid" id="shadow-soldiers-grid"></div>
+    </div>
+  </div>
+
+  <!-- 6. HOLOGRAPHIC RPG INVENTORY MODAL -->
+  <div id="inventory-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow inventory-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">[ DIMENSIONAL STORAGE // 8 SLOTS ]</div>
+        <button type="button" class="close-modal-x" onclick="closeInventoryModal()">✕</button>
+      </div>
+      <h2 class="modal-title inv-title">HUNTER INVENTORY</h2>
+      <p class="inv-desc">Artifacts and weapons dropped from Gate clearances and leveling up.</p>
+
+      <!-- 8-Slot Inventory Grid -->
+      <div class="inventory-grid" id="inventory-grid"></div>
+
+      <!-- Item Detail Inspection Pane -->
+      <div class="item-inspection-card" id="item-inspection-card">
+        <div class="inspection-header">
+          <span class="item-rarity-badge" id="inspect-rarity">S-RANK</span>
+          <h3 class="item-name" id="inspect-name">KASAKA'S VENOM FANG</h3>
+        </div>
+        <p class="item-lore" id="inspect-desc">A dagger crafted from the venomous fang of the Great Swamp Serpent.</p>
+        <div class="item-stats-row" id="inspect-stats">
+          <span class="stat-pill">+5 STR</span>
+          <span class="stat-pill">+5 END</span>
+        </div>
+        <button type="button" id="btn-equip-item" class="system-btn primary-btn inspect-action-btn" onclick="useOrEquipSelectedItem()">
+          EQUIP ARTIFACT ⚡
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. FIRST-TIME ONBOARDING WIZARD MODAL (SYSTEM AWAKENING) -->
+  <div id="onboarding-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow onboarding-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">[ SYSTEM AWAKENING // HUNTER DIRECTIVES ]</div>
+      </div>
+      <h2 class="modal-title onboarding-title">CONFIGURE YOUR LIFE PROTOCOL</h2>
+      <p class="onboarding-desc">The System is built for students managing Gym + Academics + Extra Skill mastery.</p>
+
+      <!-- Step Indicator -->
+      <div class="onboarding-steps-row">
+        <div class="step-chip active" id="step-tab-1">1. ACADEMICS</div>
+        <div class="step-chip" id="step-tab-2">2. GYM & NUTRITION</div>
+        <div class="step-chip" id="step-tab-3">3. EXTRA SKILL & DIRECTIVES</div>
+      </div>
+
+      <!-- STEP 1: Academic Status Selection (School vs College) -->
+      <div id="onboard-step-1" class="onboard-step-content">
+        <h3 class="step-subheading">SELECT YOUR ACADEMIC STATUS</h3>
+        <div class="edu-toggle-row">
+          <label class="edu-type-card selected" id="card-edu-college" onclick="selectEduType('college')">
+            <input type="radio" name="edu-type" value="college" checked style="display: none;" />
+            <div class="edu-card-icon">🎓</div>
+            <div class="edu-card-title">COLLEGE / UNIVERSITY</div>
+            <div class="edu-card-desc">Undergraduate, Engineering, Medicine, Commerce, or Sciences.</div>
+          </label>
+          <label class="edu-type-card" id="card-edu-school" onclick="selectEduType('school')">
+            <input type="radio" name="edu-type" value="school" style="display: none;" />
+            <div class="edu-card-icon">🏫</div>
+            <div class="edu-card-title">SCHOOL STUDENT</div>
+            <div class="edu-card-desc">Secondary or Higher Secondary school (9th to 12th Board).</div>
+          </label>
+        </div>
+
+        <!-- College Specific Inputs -->
+        <div id="college-details-wrap" class="edu-details-box">
+          <div class="form-row">
+            <div class="form-group">
+              <label>DEGREE / MAJOR</label>
+              <select id="onboard-college-degree" class="system-select">
+                <option value="B.Tech / B.E (Engineering & CS)" selected>B.Tech / B.E (Engineering / CS)</option>
+                <option value="MBBS / Medicine & Healthcare">MBBS / Medicine & Healthcare</option>
+                <option value="B.Sc (Science / Mathematics)">B.Sc (Science / Mathematics)</option>
+                <option value="B.Com / Finance & Economics">B.Com / Finance & Economics</option>
+                <option value="BCA / Computer Applications">BCA / Computer Applications</option>
+                <option value="BBA / Management & Business">BBA / Management & Business</option>
+                <option value="Law / LLB / BA Humanities">Law / LLB / BA Humanities</option>
+                <option value="Other Undergraduate Degree">Other Undergraduate Degree</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>YEAR OF STUDY</label>
+              <select id="onboard-college-year" class="system-select">
+                <option value="1st Year">1st Year (Freshman)</option>
+                <option value="2nd Year" selected>2nd Year (Sophomore)</option>
+                <option value="3rd Year">3rd Year (Junior)</option>
+                <option value="4th Year / Final">4th Year (Senior / Final)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- School Specific Inputs -->
+        <div id="school-details-wrap" class="edu-details-box hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label>STANDARD / GRADE</label>
+              <select id="onboard-school-grade" class="system-select">
+                <option value="9th Standard">9th Standard</option>
+                <option value="10th Standard (Board Year)">10th Standard (Board Year)</option>
+                <option value="11th Standard">11th Standard</option>
+                <option value="12th Standard (Senior Board)" selected>12th Standard (Senior Board)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>EDUCATIONAL BOARD</label>
+              <select id="onboard-school-board" class="system-select">
+                <option value="CBSE" selected>CBSE</option>
+                <option value="ICSE / ISC">ICSE / ISC</option>
+                <option value="State Board">State Board</option>
+                <option value="IB / Cambridge">IB / Cambridge</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="system-btn primary-btn next-step-btn" onclick="goToOnboardStep(2)">
+          PROCEED TO GYM & NUTRITION PROTOCOL →
+        </button>
+      </div>
+
+      <!-- STEP 2: Custom Gym Split Builder & Body Trajectory -->
+      <div id="onboard-step-2" class="onboard-step-content hidden">
+        <h3 class="step-subheading">7-DAY WORKOUT SPLIT & EXERCISES</h3>
+        <div class="split-preset-row">
+          <span class="preset-label">FAST PRESETS:</span>
+          <button type="button" class="preset-tag" onclick="applySplitPreset('ppl')">PPL (Push/Pull/Legs)</button>
+          <button type="button" class="preset-tag" onclick="applySplitPreset('upper_lower')">Upper / Lower</button>
+          <button type="button" class="preset-tag" onclick="applySplitPreset('bro_split')">Bro Split</button>
+        </div>
+
+        <div class="split-days-container" id="split-days-editor">
+          <!-- Populated dynamically: Day 1 to Day 7 inputs -->
+        </div>
+
+        <h3 class="step-subheading" style="margin-top: 14px;">PHYSIQUE TRAJECTORY</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>TRAJECTORY OBJECTIVE</label>
+            <select id="onboard-weight-goal" class="system-select">
+              <option value="gain" selected>Gaining Weight (Bulking / Muscle Hypertrophy)</option>
+              <option value="lose">Losing Weight (Cutting / Shredding Fat)</option>
+              <option value="maintain">Body Recomposition / Maintenance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>CURRENT WEIGHT (KG)</label>
+            <input type="number" step="0.1" id="onboard-current-weight" value="75.0" required />
+          </div>
+          <div class="form-group">
+            <label>TARGET GOAL (KG)</label>
+            <input type="number" step="0.1" id="onboard-target-weight" value="80.0" required />
+          </div>
+        </div>
+
+        <div class="onboard-nav-row">
+          <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(1)">← BACK</button>
+          <button type="button" class="system-btn primary-btn" onclick="goToOnboardStep(3)">PROCEED TO EXTRA SKILL →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Extra Skill & Directives Preview -->
+      <div id="onboard-step-3" class="onboard-step-content hidden">
+        <h3 class="step-subheading">EXTRA SKILL / CRAFT TO DEVELOP</h3>
+        <p class="onboarding-subtext">Every hunter cultivates an extra edge outside gym and classes.</p>
+        
+        <div class="form-group">
+          <label>NAME YOUR SKILL / PASSION</label>
+          <input type="text" id="onboard-ecc-skill" value="Web Development & Coding" placeholder="e.g. Full-Stack Web Dev, Music / Guitar, Competitive Coding, German Language" required />
+        </div>
+
+        <h3 class="step-subheading" style="margin-top: 16px;">YOUR BALANCED 5+ DAILY DIRECTIVES (PREVIEW)</h3>
+        <div class="preview-directives-box" id="onboard-directives-preview">
+          <div class="preview-quest-item gym">
+            <span class="preview-badge">[GYM]</span>
+            <span>Today's Split Regimen Adherence / Rest Day</span>
+          </div>
+          <div class="preview-quest-item gym">
+            <span class="preview-badge">[GYM]</span>
+            <span>Hit Daily Caloric Target & Protein Macro (1.6-2.2g/kg)</span>
+          </div>
+          <div class="preview-quest-item gym">
+            <span class="preview-badge">[GYM]</span>
+            <span>3.5L Water Hydration & 8h Recovery Sleep</span>
+          </div>
+          <div class="preview-quest-item acad">
+            <span class="preview-badge">[ACADEMICS]</span>
+            <span id="preview-acad-1">2-Hour Core Degree Study Block</span>
+          </div>
+          <div class="preview-quest-item acad">
+            <span class="preview-badge">[ACADEMICS]</span>
+            <span id="preview-acad-2">Coursework Problem Solving & Assignment Prep</span>
+          </div>
+          <div class="preview-quest-item ecc">
+            <span class="preview-badge">[ECC SKILL]</span>
+            <span id="preview-ecc">45 Min Deliberate Practice on Web Development & Coding</span>
+          </div>
+        </div>
+
+        <div class="onboard-nav-row" style="margin-top: 18px;">
+          <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(2)">← BACK</button>
+          <button type="button" class="system-btn primary-btn" onclick="submitOnboardingDirectives()">
+            ⚡ AWAKEN & COMMENCE DISCIPLINE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8B. MANAGE / EDIT DAILY QUESTS MODAL -->
+  <div id="manage-quests-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow manage-quests-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">[ DIRECTIVES REGISTRY // QUEST MANAGER ]</div>
+        <button type="button" class="close-modal-x" onclick="closeManageQuestsModal()">✕</button>
+      </div>
+      <h2 class="modal-title">CUSTOMIZE DAILY DIRECTIVES</h2>
+      <p class="modal-subtitle">
+        Maintain at least 5 active daily quests (minimum 2 Gym, 2 Academics, and 1 Extracurricular).
+      </p>
+
+      <!-- Quota Indicator Summary -->
+      <div class="quota-summary-box">
+        <div class="quota-chip" id="quota-chip-gym">
+          <span class="quota-name">🏋️ GYM:</span>
+          <span class="quota-val" id="quota-gym-val">2 / 2 (MIN)</span>
+        </div>
+        <div class="quota-chip" id="quota-chip-acad">
+          <span class="quota-name">📚 STUDY:</span>
+          <span class="quota-val" id="quota-acad-val">2 / 2 (MIN)</span>
+        </div>
+        <div class="quota-chip" id="quota-chip-ecc">
+          <span class="quota-name">⚡ SKILL:</span>
+          <span class="quota-val" id="quota-ecc-val">1 / 1 (MIN)</span>
+        </div>
+        <div class="quota-chip total" id="quota-chip-total">
+          <span class="quota-name">🎯 TOTAL:</span>
+          <span class="quota-val" id="quota-total-val">5 / 5 (MIN)</span>
+        </div>
+      </div>
+
+      <!-- Active Quests List with Delete Controls -->
+      <div class="manage-quests-scroll" id="manage-quests-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Add New Custom Quest Section -->
+      <div class="add-quest-subform">
+        <div class="subform-header">+ ADD NEW CUSTOM DIRECTIVE</div>
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label>QUEST OBJECTIVE</label>
+            <input type="text" id="new-quest-name" placeholder="e.g. 3 LeetCode problems, Heavy Leg session, 45m Guitar chords" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>CATEGORY</label>
+            <select id="new-quest-category" class="system-select">
+              <option value="gym">🏋️ Gym & Physical</option>
+              <option value="academics">📚 Academics & Study</option>
+              <option value="ecc">⚡ Extracurricular (ECC)</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="system-btn-secondary" onclick="addNewQuestFromManager()">+ ADD TO DIRECTIVES</button>
+      </div>
+
+      <div class="modal-btn-row" style="margin-top: 14px;">
+        <button type="button" class="system-btn primary-btn" onclick="saveQuestsFromManager()">SAVE CHANGES ⚡</button>
+        <button type="button" class="system-btn cancel-btn" onclick="closeManageQuestsModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8C. DEDICATED DAILY LOG BOOK MODAL -->
+  <div id="logbook-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow logbook-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">[ HUNTER CHRONICLE // DAILY LOG BOOK ]</div>
+        <button type="button" class="close-modal-x" onclick="closeLogBookModal()">✕</button>
+      </div>
+      <h2 class="modal-title logbook-title">DAILY DISCIPLINE LOG BOOK</h2>
+      
+      <div class="logbook-penalty-banner">
+        <span class="penalty-siren-dot">⚠</span>
+        <span>SYSTEM MANDATE: Failure to submit your daily Log Book incurs an automated <strong>-50 EXP penalty</strong>.</span>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="logbook-tabs-row">
+        <button type="button" class="logbook-tab-btn active" id="tab-log-today" onclick="switchLogBookTab('today')">
+          ✍ WRITE TODAY'S LOG
+        </button>
+        <button type="button" class="logbook-tab-btn" id="tab-log-history" onclick="switchLogBookTab('history')">
+          📜 CHRONICLE ARCHIVES (<span id="logbook-count">0</span>)
+        </button>
+      </div>
+
+      <!-- Tab 1: Today's Form -->
+      <div id="log-view-today" class="logbook-tab-content">
+        <form id="daily-log-form" onsubmit="submitDailyLog(event)">
+          <div class="logbook-grid-fields">
+            <div class="form-group">
+              <label>🏋️ GYM & NUTRITION LOG</label>
+              <textarea id="log-gym" rows="3" placeholder="Exercises completed, working weights/PRs, calories & protein macro target reached..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>📚 ACADEMICS & STUDY LOG</label>
+              <textarea id="log-academics" rows="3" placeholder="Hours studied, topics reviewed, coursework/assignments finished..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>⚡ EXTRACURRICULAR SKILL LOG</label>
+              <textarea id="log-ecc" rows="2" placeholder="Skill practiced (coding, music, language), project milestone achieved..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>💭 MINDSET & KEY WINS / REFLECTION</label>
+              <textarea id="log-reflection" rows="2" placeholder="Key wins of the day, discipline challenges overcome, lessons learned..."></textarea>
+            </div>
+          </div>
+
+          <!-- Star Rating -->
+          <div class="log-rating-row">
+            <span class="rating-label">DAY DISCIPLINE RATING:</span>
+            <div class="star-rating-box" id="star-rating-box">
+              <span class="star active" data-value="1" onclick="setLogRating(1)">★</span>
+              <span class="star active" data-value="2" onclick="setLogRating(2)">★</span>
+              <span class="star active" data-value="3" onclick="setLogRating(3)">★</span>
+              <span class="star active" data-value="4" onclick="setLogRating(4)">★</span>
+              <span class="star active" data-value="5" onclick="setLogRating(5)">★</span>
+            </div>
+            <input type="hidden" id="log-rating-val" value="5" />
+          </div>
+
+          <div class="modal-btn-row" style="margin-top: 14px;">
+            <button type="submit" class="system-btn primary-btn logbook-submit-btn">
+              ⚡ SUBMIT DAILY CHRONICLE (+30 EXP)
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab 2: Past History Feed -->
+      <div id="log-view-history" class="logbook-tab-content hidden">
+        <div class="logbook-history-scroll" id="logbook-history-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. TODAY'S SPLIT & 21-DAY ATTENDANCE CALENDAR MODAL -->
+  <div id="split-calendar-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow calendar-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">[ SYSTEM DISCIPLINE // SPLIT & CALENDAR ]</div>
+        <button type="button" class="close-modal-x" onclick="closeSplitCalendarModal()">✕</button>
+      </div>
+
+      <!-- Today's Workout / Rest Adherence Card -->
+      <div class="today-split-card" id="today-split-card">
+        <div class="today-split-header">
+          <span class="today-tag">[ TODAY'S ASSIGNED REGIMEN ]</span>
+          <span class="rest-indicator-badge" id="today-split-badge">WORKOUT ACTIVE</span>
+        </div>
+        <h2 class="split-name-title" id="today-split-title">PUSH (CHEST, SHOULDERS, TRICEPS)</h2>
+        <div class="split-exercises-box" id="today-exercises-list"></div>
+        <button type="button" id="btn-confirm-split" class="system-btn primary-btn confirm-split-btn" onclick="confirmTodaySplitAttendance()">
+          ⚡ CONFIRM WORKOUT ADHERENCE
+        </button>
+      </div>
+
+      <!-- 21-Day Habit Streak Tracker -->
+      <div class="streak-21-banner">
+        <div class="streak-21-header">
+          <span class="flame-icon">🔥</span>
+          <div class="streak-text-wrap">
+            <div class="streak-title">21-DAY UNBROKEN SPLIT STREAK</div>
+            <div class="streak-desc">Scheduled rest days count as valid adherence. Reach 21 days for +3,000 XP Awakening!</div>
+          </div>
+          <div class="streak-count-tag" id="streak-21-count">0 / 21</div>
+        </div>
+        <div class="streak-bar-bg">
+          <div class="streak-bar-fill" id="streak-21-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Monthly Calendar Attendance Grid -->
+      <div class="calendar-section">
+        <div class="calendar-header-row">
+          <span class="calendar-month-title" id="calendar-month-title">ATTENDANCE CALENDAR</span>
+          <div class="legend-row">
+            <span class="legend-dot green">● Workout</span>
+            <span class="legend-dot cyan">● Rest Adhered</span>
+            <span class="legend-dot red">● Missed</span>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Populated dynamically with current month's days -->
+        </div>
+      </div>
+
+      <!-- Weight Goal Progress Tracking -->
+      <div class="weight-track-card">
+        <div class="weight-meta-row">
+          <div>
+            <span class="label">CURRENT WEIGHT:</span>
+            <span class="value" id="cal-current-weight">75.0 KG</span>
+          </div>
+          <div>
+            <span class="label">GOAL TRAJECTORY:</span>
+            <span class="value" id="cal-target-weight">80.0 KG</span>
+          </div>
+        </div>
+        <div class="weight-update-input-row">
+          <input type="number" step="0.1" id="quick-weight-input" placeholder="New Weight (kg)" />
+          <button type="button" class="system-btn-secondary" onclick="quickLogWeight()">+ LOG WEIGHT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. SYSTEM PENALTY ZONE EMERGENCY OVERLAY -->
+  <div id="penalty-warning-stage" class="penalty-warning-stage hidden">
+    <div class="penalty-flashing-border"></div>
+    <div class="penalty-content-card">
+      <div class="penalty-siren-badge">⚠ EMERGENCY PENALTY PROTOCOL ⚠</div>
+      <h1 class="penalty-main-title">PENALTY ZONE ACTIVATED</h1>
+      <p class="penalty-narrative" id="penalty-narrative-text">
+        You failed to log your quests for consecutive days. The System does not tolerate complacency.
+      </p>
+      <div class="penalty-deduction-box" id="penalty-deduction-amount">
+        -150 EXP DEDUCTED
+      </div>
+      <p class="penalty-instruction">
+        Immediate disciplinary action required: Re-engage your daily objectives and rebuild your discipline.
+      </p>
+      <button type="button" class="system-btn penalty-confirm-btn" onclick="dismissPenaltyWarning()">
+        ACKNOWLEDGE PENALTY & RESUME QUESTS ⚡
+      </button>
+    </div>
+  </div>
+
+  <!-- 11. GOOGLE HUNTER AUTHENTICATION MODAL -->
+  <div id="google-auth-modal" class="modal-overlay hidden">
+    <div class="modal-content panel-glow google-auth-panel">
+      <div class="gate-header-banner">
+        <div class="system-badge">
+          <svg class="google-icon" viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          [ GOOGLE IDENTITY PROTOCOL // HUNTER ACCESS ]
+        </div>
+        <button type="button" class="close-modal-x" onclick="closeGoogleAuthModal()">✕</button>
+      </div>
+
+      <div class="google-auth-body">
+        <h2 class="google-panel-title">CONTINUE WITH GOOGLE</h2>
+        <p class="google-panel-subtitle">Select or enter your Google Hunter credentials to awaken and log into your dashboard.</p>
+
+        <!-- Official GIS Container for Live Production Client ID -->
+        <div id="google-gis-container" class="google-gis-container"></div>
+
+        <!-- One-Click Account Fast-Pickers -->
+        <div class="google-accounts-picker">
+          <div class="account-picker-label">QUICK ACCOUNT SELECTOR:</div>
+          <div class="google-account-tile" onclick="selectQuickGoogleAccount('Krishna', 'krishnadvrr@gmail.com')">
+            <div class="account-tile-avatar">K</div>
+            <div class="account-tile-info">
+              <div class="account-tile-name">Krishna (Architect)</div>
+              <div class="account-tile-email">krishnadvrr@gmail.com</div>
+            </div>
+            <span class="account-tile-arrow">➔</span>
+          </div>
+
+          <div class="google-account-tile" onclick="selectQuickGoogleAccount('Arjun Hunter', 'arjun.hunter@gmail.com')">
+            <div class="account-tile-avatar">A</div>
+            <div class="account-tile-info">
+              <div class="account-tile-name">Arjun Hunter</div>
+              <div class="account-tile-email">arjun.hunter@gmail.com</div>
+            </div>
+            <span class="account-tile-arrow">➔</span>
+          </div>
+        </div>
+
+        <div class="auth-divider" style="margin: 16px 0;">
+          <span class="auth-divider-line"></span>
+          <span class="auth-divider-text">OR ENTER YOUR GMAIL</span>
+          <span class="auth-divider-line"></span>
+        </div>
+
+        <!-- Custom Google Account Form -->
+        <form id="google-custom-auth-form" onsubmit="submitCustomGoogleAuth(event)">
+          <div class="form-group compact-group">
+            <label class="input-label-sm">GOOGLE ACCOUNT NAME</label>
+            <div class="input-wrapper compact-input">
+              <span class="input-prefix">USER_</span>
+              <input type="text" id="google-input-name" placeholder="e.g. Rahul Sharma" required />
+            </div>
+          </div>
+
+          <div class="form-group compact-group">
+            <label class="input-label-sm">GMAIL ADDRESS</label>
+            <div class="input-wrapper compact-input">
+              <span class="input-prefix">MAIL_</span>
+              <input type="email" id="google-input-email" placeholder="e.g. rahul.sharma@gmail.com" required />
+            </div>
+          </div>
+
+          <button type="submit" class="system-btn primary-btn" style="width: 100%; margin-top: 10px;">
+            ⚡ AWAKEN HUNTER VIA GOOGLE
+          </button>
+        </form>
+
+        <div class="google-security-notice">
+          🔒 Secure 256-bit OAuth Simulation. Your profile and progress will be bound to this Google ID.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script loaded last after DOM is ready -->
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
