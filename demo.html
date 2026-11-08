@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascension Pro - Executive Dashboard Demo</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#090b10] text-[#e2e8f0] antialiased p-4 md:p-6 min-h-screen">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Top Executive Header -->
+    <header class="bg-[#11141c] border border-[#1e2330] rounded-xl px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
+          A
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-semibold text-white tracking-tight">ASCENSION</h1>
+            <span class="mono text-xs px-2 py-0.5 rounded bg-[#1a202c] text-cyan-400 border border-cyan-500/20 font-medium">PRO v3.0</span>
+          </div>
+          <p class="text-xs text-slate-400">Executive Habit & Protocol System</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <!-- Metric 1: Discipline Index -->
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block mono">DISCIPLINE INDEX</span>
+            <span class="text-sm font-semibold text-white">88% <span class="text-emerald-400 text-xs font-normal">+4% this wk</span></span>
+          </div>
+          <div class="w-8 h-8 rounded-full border-2 border-cyan-400 flex items-center justify-center text-xs font-semibold mono text-cyan-400">
+            A
+          </div>
+        </div>
+
+        <div class="h-8 w-px bg-[#1e2330] hidden md:block"></div>
+
+        <!-- Metric 2: Streak -->
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block mono">CURRENT STREAK</span>
+            <span class="text-sm font-semibold text-white flex items-center gap-1 justify-end">
+              <span class="text-amber-400">🔥</span> 14 Days
+            </span>
+          </div>
+        </div>
+
+        <div class="h-8 w-px bg-[#1e2330] hidden md:block"></div>
+
+        <!-- Profile badge -->
+        <div class="flex items-center gap-2 bg-[#161a24] px-3 py-1.5 rounded-lg border border-[#232938]">
+          <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">K</div>
+          <div class="text-left">
+            <span class="text-xs font-medium text-white block">KRISHNA</span>
+            <span class="text-[12px] mono text-slate-400 block">LEVEL 04 // S-TIER</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main 3-Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Column 1: Daily Protocol Checklist (5 cols) -->
+      <section class="lg:col-span-5 bg-[#11141c] border border-[#1e2330] rounded-xl p-5 flex flex-col justify-between shadow-sm">
+        <div>
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#1e2330]">
+            <div>
+              <h2 class="text-sm font-semibold text-white tracking-wide">TODAY'S PROTOCOL DIRECTIVES</h2>
+              <span class="text-xs text-slate-400 mono">MONDAY // PUSH + CORE DEGREE</span>
+            </div>
+            <span id="completed-count" class="mono text-xs px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
+              3/5 COMPLETED
+            </span>
+          </div>
+
+          <!-- Quest items list -->
+          <div class="space-y-2.5" id="task-container">
+            <!-- Item 1: Gym -->
+            <label class="flex items-start gap-3 p-3 rounded-lg bg-[#161a24] border border-[#232938] hover:border-cyan-500/30 transition-all cursor-pointer">
+              <input type="checkbox" checked onchange="updateCounts()" class="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-0 bg-[#0d0f15] w-4 h-4 cursor-pointer accent-cyan-500">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-white">Push Regimen (Chest & Triceps)</span>
+                  <span class="mono text-[12px] text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-500/20">+35 EXP</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Bench Press 4x8, Incline DB Press 3x10, Dips</p>
+              </div>
+            </label>
+
+            <!-- Item 2: Nutrition -->
+            <label class="flex items-start gap-3 p-3 rounded-lg bg-[#161a24] border border-[#232938] hover:border-cyan-500/30 transition-all cursor-pointer">
+              <input type="checkbox" checked onchange="updateCounts()" class="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-0 bg-[#0d0f15] w-4 h-4 cursor-pointer accent-cyan-500">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-white">160g Protein & 3.5L Hydration</span>
+                  <span class="mono text-[12px] text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-500/20">+20 EXP</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Caloric surplus macro targets verified</p>
+              </div>
+            </label>
+
+            <!-- Item 3: Academics -->
+            <label class="flex items-start gap-3 p-3 rounded-lg bg-[#161a24] border border-[#232938] hover:border-cyan-500/30 transition-all cursor-pointer">
+              <input type="checkbox" checked onchange="updateCounts()" class="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-0 bg-[#0d0f15] w-4 h-4 cursor-pointer accent-cyan-500">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-white">2h Core Engineering Deep Work</span>
+                  <span class="mono text-[12px] text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-500/20">+40 EXP</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Algorithm Complexity & Systems Architecture</p>
+              </div>
+            </label>
+
+            <!-- Item 4: Extra Skill -->
+            <label class="flex items-start gap-3 p-3 rounded-lg bg-[#161a24] border border-[#232938] hover:border-cyan-500/30 transition-all cursor-pointer">
+              <input type="checkbox" onchange="updateCounts()" class="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-0 bg-[#0d0f15] w-4 h-4 cursor-pointer accent-cyan-500">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-slate-200">45-Min Craft Practice</span>
+                  <span class="mono text-[12px] text-slate-400 bg-[#1c2230] px-1.5 py-0.5 rounded">+25 EXP</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Full-Stack API Design & Deployment</p>
+              </div>
+            </label>
+
+            <!-- Item 5: Daily Review -->
+            <label class="flex items-start gap-3 p-3 rounded-lg bg-[#161a24] border border-[#232938] hover:border-cyan-500/30 transition-all cursor-pointer">
+              <input type="checkbox" onchange="updateCounts()" class="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-0 bg-[#0d0f15] w-4 h-4 cursor-pointer accent-cyan-500">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-slate-200">Submit Daily Chronicle Log</span>
+                  <span class="mono text-[12px] text-slate-400 bg-[#1c2230] px-1.5 py-0.5 rounded">+30 EXP</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Log working sets, study hours, reflection</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button class="mt-4 w-full py-2.5 rounded-lg border border-[#2b3345] bg-[#161a24] hover:bg-[#1e2330] text-xs font-medium text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2">
+          <span>+ Add Custom Objective</span>
+        </button>
+      </section>
+
+      <!-- Column 2: Minimalist Focus Protocol (4 cols) -->
+      <section class="lg:col-span-4 bg-[#11141c] border border-[#1e2330] rounded-xl p-5 flex flex-col justify-between shadow-sm">
+        <div>
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#1e2330]">
+            <div>
+              <h2 class="text-sm font-semibold text-white tracking-wide">FOCUS PROTOCOL</h2>
+              <span class="text-xs text-slate-400 mono">DISTRACTION-FREE BLOCK</span>
+            </div>
+            <span class="mono text-xs px-2 py-0.5 rounded bg-[#161a24] text-slate-300 border border-[#232938]">
+              DEEP WORK
+            </span>
+          </div>
+
+          <!-- Mode Selector Chips -->
+          <div class="grid grid-cols-3 gap-2 mb-6">
+            <button onclick="setTimer(25)" class="timer-chip py-1.5 rounded-md text-xs font-medium bg-cyan-950/60 text-cyan-300 border border-cyan-500/40">25m</button>
+            <button onclick="setTimer(50)" class="timer-chip py-1.5 rounded-md text-xs font-medium bg-[#161a24] text-slate-400 border border-[#232938] hover:text-white">50m</button>
+            <button onclick="setTimer(90)" class="timer-chip py-1.5 rounded-md text-xs font-medium bg-[#161a24] text-slate-400 border border-[#232938] hover:text-white">90m</button>
+          </div>
+
+          <!-- Digital Clock Display -->
+          <div class="text-center py-6 bg-[#0c0e14] rounded-xl border border-[#1b1f2b] my-2">
+            <div id="timer-display" class="mono text-5xl font-bold tracking-tight text-white mb-2">
+              25:00
+            </div>
+            <span class="text-xs text-slate-400 mono">ACTIVE FOCUS INTERVAL</span>
+          </div>
+        </div>
+
+        <div class="space-y-2 mt-4">
+          <div class="grid grid-cols-2 gap-2">
+            <button id="timer-btn" onclick="toggleTimer()" class="py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs transition-colors flex items-center justify-center gap-1.5">
+              <span>▶ START FOCUS</span>
+            </button>
+            <button onclick="resetTimer()" class="py-2.5 rounded-lg bg-[#161a24] hover:bg-[#1e2330] border border-[#232938] text-slate-300 text-xs font-medium transition-colors">
+              RESET
+            </button>
+          </div>
+          <p class="text-[12px] text-slate-400 text-center mono">
+            Audio cues muted // Low visual noise mode active
+          </p>
+        </div>
+      </section>
+
+      <!-- Column 3: Biometric / Weekly Attendance & Logbook (3 cols) -->
+      <section class="lg:col-span-3 bg-[#11141c] border border-[#1e2330] rounded-xl p-5 flex flex-col justify-between shadow-sm">
+        <div>
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#1e2330]">
+            <div>
+              <h2 class="text-sm font-semibold text-white tracking-wide">DISCIPLINE MATRIX</h2>
+              <span class="text-xs text-slate-400 mono">LAST 7 DAYS</span>
+            </div>
+            <span class="mono text-xs text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+              100%
+            </span>
+          </div>
+
+          <!-- 7-Day Matrix -->
+          <div class="grid grid-cols-7 gap-1.5 mb-5 text-center">
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">M</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">T</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">W</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">T</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">F</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-slate-400">S</span>
+              <div class="h-8 rounded bg-cyan-500 flex items-center justify-center text-[12px] font-bold text-black">✓</div>
+            </div>
+            <div class="space-y-1">
+              <span class="mono text-[12px] text-cyan-400 font-bold">S</span>
+              <div class="h-8 rounded bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-[12px] font-bold text-cyan-300">●</div>
+            </div>
+          </div>
+
+          <!-- Quick Chronicle Log Form -->
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-slate-300">QUICK CHRONICLE ENTRY</label>
+            <textarea rows="3" placeholder="Key workout working weights, hours studied, reflections..." class="w-full bg-[#0c0e14] border border-[#232938] rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"></textarea>
+          </div>
+        </div>
+
+        <button class="mt-4 w-full py-2.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 font-medium text-xs transition-colors">
+          Submit Log (+30 EXP)
+        </button>
+      </section>
+
+    </div>
+
+    <!-- Comparison Summary Footer -->
+    <footer class="bg-[#11141c] border border-[#1e2330] rounded-xl p-4 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span><strong>Ascension Pro Architecture</strong>: Reduced bundle payload by 40%, zero blocking audio clips, full mobile responsive layout.</span>
+      </div>
+      <div class="flex items-center gap-4 mono text-[12px]">
+        <span>OBSIDIAN & CYAN THEME</span>
+        <span>•</span>
+        <span>LINEAR/VERCEL COMPLIANT</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    let timerMinutes = 25;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isRunning = false;
+
+    function setTimer(mins) {
+      clearInterval(timerInterval);
+      isRunning = false;
+      timerMinutes = mins;
+      timerSeconds = 0;
+      updateDisplay();
+      document.getElementById('timer-btn').innerHTML = '<span>▶ START FOCUS</span>';
+      document.querySelectorAll('.timer-chip').forEach(btn => {
+        const match = btn.innerText === mins + 'm';
+        btn.className = match 
+          ? 'timer-chip py-1.5 rounded-md text-xs font-medium bg-cyan-950/60 text-cyan-300 border border-cyan-500/40' 
+          : 'timer-chip py-1.5 rounded-md text-xs font-medium bg-[#161a24] text-slate-400 border border-[#232938] hover:text-white';
+      });
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+        document.getElementById('timer-btn').innerHTML = '<span>▶ RESUME</span>';
+      } else {
+        isRunning = true;
+        document.getElementById('timer-btn').innerHTML = '<span>⏸ PAUSE</span>';
+        timerInterval = setInterval(() => {
+          if (timerSeconds === 0) {
+            if (timerMinutes === 0) {
+              clearInterval(timerInterval);
+              isRunning = false;
+              alert('Focus Protocol Complete!');
+              return;
+            }
+            timerMinutes--;
+            timerSeconds = 59;
+          } else {
+            timerSeconds--;
+          }
+          updateDisplay();
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      timerMinutes = 25;
+      timerSeconds = 0;
+      updateDisplay();
+      document.getElementById('timer-btn').innerHTML = '<span>▶ START FOCUS</span>';
+    }
+
+    function updateDisplay() {
+      const m = String(timerMinutes).padStart(2, '0');
+      const s = String(timerSeconds).padStart(2, '0');
+      document.getElementById('timer-display').innerText = `${m}:${s}`;
+    }
+
+    function updateCounts() {
+      const checkboxes = document.querySelectorAll('#task-container input[type="checkbox"]');
+      let checked = 0;
+      checkboxes.forEach(c => { if (c.checked) checked++; });
+      document.getElementById('completed-count').innerText = `${checked}/${checkboxes.length} COMPLETED`;
+    }
+  </script>
+</body>
+</html>
