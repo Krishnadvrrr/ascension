@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <title>ASCENSION - Hunter Status & Discipline</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2.2" />
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <title>ASCENSION PRO - Executive Status & Discipline</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=3.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
   <!-- Fullscreen Wallpaper Slideshow Layers -->
@@ -27,7 +27,7 @@
   <div id="system-hologram-container" class="system-hologram-container"></div>
 
   <!-- 0. 3D CREATOR INTRO POPUP (2.5 - 3s Clip / Holographic Awakening) -->
-  <div id="creator-intro-stage" class="creator-intro-stage">
+  <div id="creator-intro-stage" class="creator-intro-stage hidden">
     <div class="creator-intro-backdrop"></div>
     <div class="creator-3d-scene">
       <!-- Outer Rotating Mana Rings -->
@@ -306,7 +306,7 @@
     </div>
   </aside>
 
-  <!-- 3. SPLIT HUNTER HUD (Hanging Blocks Along Edges on PC / Responsive Native Flow on Mobile) -->
+  <!-- 3. SPLIT HUNTER HUD (Executive 3-Column Grid) -->
   <main id="hud-container" class="hud-split-screen hidden">
     <!-- Top Bar Hanging Header -->
     <header class="hud-top-bar panel-glow">
@@ -319,7 +319,7 @@
         </button>
 
         <div class="top-bar-identity">
-          <div class="system-badge">[ ASCENSION ONLINE ]</div>
+          <div class="system-badge">[ ASCENSION PRO v3.0 ]</div>
           <div class="player-rank-tag">RANK: <span id="player-rank">E-RANK HUNTER</span></div>
           <div class="header-metrics-sub">
             <span class="hud-meta-badge" id="hud-weight-tag">⚖ 75.0 KG</span>
@@ -329,7 +329,7 @@
       </div>
 
       <div class="top-bar-center">
-        <h1 class="player-greeting" id="player-greeting">WELCOME BACK, SIR</h1>
+        <h1 class="player-greeting" id="player-greeting">ASCENSION EXECUTIVE PROTOCOL</h1>
       </div>
 
       <!-- Mobile Quick Logbook Button (Visible only on mobile header) -->
@@ -365,70 +365,124 @@
       </div>
     </header>
 
-    <!-- Left Wing: Hanging Attributes Panel (Gym, Academics, Discipline, Recovery) -->
-    <aside class="hud-wing-left panel-glow">
-      <div class="panel-header-row">
-        <h2 class="section-title">ATTRIBUTES</h2>
-        <span class="status-indicator">● ACTIVE</span>
-      </div>
-      <div class="stat-row" title="Physical Strength, Heavy Compound Lifts & Gym PRs">
-        <span class="stat-name">STR <small class="stat-tag">GYM</small></span>
-        <span class="stat-val" id="stat-str">10</span>
-      </div>
-      <div class="stat-row" title="Cognitive Endurance, Deep Study & Academic Performance">
-        <span class="stat-name">INT <small class="stat-tag">STUDY</small></span>
-        <span class="stat-val" id="stat-agi">10</span>
-      </div>
-      <div class="stat-row" title="Daily Consistency, Habit Adherence & Willpower">
-        <span class="stat-name">DIS <small class="stat-tag">HABITS</small></span>
-        <span class="stat-val" id="stat-vit">10</span>
-      </div>
-      <div class="stat-row" title="Sleep Optimization, Hydration & Tissue Recovery">
-        <span class="stat-name">REC <small class="stat-tag">SLEEP</small></span>
-        <span class="stat-val" id="stat-end">10</span>
-      </div>
-
-      <div class="quote-terminal-box">
-        <div class="quote-terminal-header">[ SYSTEM ADVISORY ]</div>
-        <p id="motivational-quote" class="quote-text">
-          "Discipline in the gym fuels focus at your desk. Rise above stagnation."
-        </p>
-      </div>
-    </aside>
-
-    <!-- Right Wing: Hanging Daily Quests Panel -->
-    <aside class="hud-wing-right panel-glow">
-      <div class="quest-alert-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="warning-icon">⚠</span>
-          <h2>DAILY QUESTS</h2>
+    <!-- 3-Column Executive Grid -->
+    <div class="executive-grid-container">
+      <!-- Col 1: Directives & Daily Quests -->
+      <section class="hud-wing-right panel-glow">
+        <div class="quest-alert-header">
+          <div>
+            <h2>TODAY'S PROTOCOL DIRECTIVES</h2>
+            <div class="penalty-warning">[STUDENT DISCIPLINE // GYM • ACADEMICS • SKILL]</div>
+          </div>
+          <button type="button" class="quest-header-btn" onclick="openManageQuestsModal()" title="Manage / Edit Quests (Min 2 Gym, 2 Academics, 1 ECC)">
+            ⚙ MANAGE
+          </button>
         </div>
-        <button type="button" class="quest-header-btn" onclick="openManageQuestsModal()" title="Manage / Edit Quests (Min 2 Gym, 2 Academics, 1 ECC)">
-          ⚙ MANAGE
-        </button>
-      </div>
-      <p class="penalty-warning">[STUDENT DISCIPLINE // GYM • ACADEMICS • SKILL]</p>
-      
-      <!-- Mobile-Only Prominent Log Book Direct Action Card -->
-      <div class="mobile-log-cta-card" onclick="openLogBookModal()">
-        <div class="mobile-log-cta-left">
-          <span class="mobile-cta-icon">📖</span>
-          <div class="mobile-cta-texts">
-            <span class="mobile-cta-title">WRITE TODAY'S LOG BOOK</span>
-            <span class="mobile-cta-desc">Record gym & study to claim <strong>+30 EXP</strong></span>
+
+        <!-- Mobile-Only Prominent Log Book Direct Action Card -->
+        <div class="mobile-log-cta-card" onclick="openLogBookModal()">
+          <div class="mobile-log-cta-left">
+            <span class="mobile-cta-icon">📖</span>
+            <div class="mobile-cta-texts">
+              <span class="mobile-cta-title">WRITE TODAY'S LOG BOOK</span>
+              <span class="mobile-cta-desc">Record gym & study to claim <strong>+30 EXP</strong></span>
+            </div>
+          </div>
+          <span class="mobile-cta-btn">LOG ➔</span>
+        </div>
+
+        <ul class="task-list" id="task-list"></ul>
+
+        <div class="quest-footer-row" style="display: flex; gap: 8px;">
+          <button type="button" class="system-btn-secondary" style="flex: 1;" onclick="openCustomQuestModal()">
+            + ADD CUSTOM OBJECTIVE
+          </button>
+          <button type="button" class="system-btn-secondary" onclick="openManageQuestsModal()">
+            ⚙ EDIT DIRECTIVES
+          </button>
+        </div>
+      </section>
+
+      <!-- Col 2: Focus Protocol (Deep Work Pomodoro) -->
+      <section class="hud-center-focus panel-glow">
+        <div>
+          <div class="focus-card-header">
+            <div>
+              <h2>FOCUS PROTOCOL</h2>
+              <span class="penalty-warning">[DISTRACTION-FREE DEEP WORK]</span>
+            </div>
+            <span class="system-badge">DEEP WORK</span>
+          </div>
+
+          <!-- Preset Duration Chips -->
+          <div class="focus-presets-row">
+            <button type="button" class="focus-preset-btn active" onclick="setDashboardTimer(25, this)">25 MIN (STANDARD)</button>
+            <button type="button" class="focus-preset-btn" onclick="setDashboardTimer(50, this)">50 MIN (EXTREME)</button>
+            <button type="button" class="focus-preset-btn" onclick="setDashboardTimer(90, this)">90 MIN (SPRINT)</button>
+          </div>
+
+          <!-- Giant Digital Clock Display -->
+          <div class="focus-clock-card">
+            <div id="focus-clock-display" class="focus-clock-digits">25:00</div>
+            <div class="focus-clock-label">ACTIVE FOCUS INTERVAL</div>
+            <div class="boss-hp-bar-bg" style="margin-top: 14px;">
+              <div id="focus-progress-fill" class="boss-hp-bar-fill" style="width: 100%;"></div>
+            </div>
           </div>
         </div>
-        <span class="mobile-cta-btn">LOG ➔</span>
-      </div>
 
-      <ul class="task-list" id="task-list"></ul>
-      
-      <div class="quest-footer-row">
-        <button type="button" class="system-btn-secondary" onclick="openManageQuestsModal()">
-          ⚙ EDIT / MANAGE QUESTS
+        <div>
+          <div class="focus-action-row">
+            <button type="button" id="btn-focus-start" class="system-btn primary-btn" onclick="toggleDashboardFocus()">
+              <span>▶ START FOCUS</span>
+            </button>
+            <button type="button" class="system-btn-secondary" onclick="resetDashboardFocus()">
+              RESET
+            </button>
+          </div>
+          <p style="text-align: center; margin-top: 10px; font-size: 0.72rem; color: var(--text-dim);" class="mono">
+            Low visual noise • Executive deep work session
+          </p>
+        </div>
+      </section>
+
+      <!-- Col 3: Attributes & Discipline Matrix -->
+      <section class="hud-wing-left panel-glow">
+        <div>
+          <div class="panel-header-row">
+            <h2 class="section-title">DISCIPLINE MATRIX & ATTRIBUTES</h2>
+            <span class="status-indicator">● ACTIVE</span>
+          </div>
+          <div class="stat-row" title="Physical Strength, Heavy Compound Lifts & Gym PRs">
+            <span class="stat-name">STR <small class="stat-tag">GYM</small></span>
+            <span class="stat-val" id="stat-str">10</span>
+          </div>
+          <div class="stat-row" title="Cognitive Endurance, Deep Study & Academic Performance">
+            <span class="stat-name">INT <small class="stat-tag">STUDY</small></span>
+            <span class="stat-val" id="stat-agi">10</span>
+          </div>
+          <div class="stat-row" title="Daily Consistency, Habit Adherence & Willpower">
+            <span class="stat-name">DIS <small class="stat-tag">HABITS</small></span>
+            <span class="stat-val" id="stat-vit">10</span>
+          </div>
+          <div class="stat-row" title="Sleep Optimization, Hydration & Tissue Recovery">
+            <span class="stat-name">REC <small class="stat-tag">SLEEP</small></span>
+            <span class="stat-val" id="stat-end">10</span>
+          </div>
+
+          <div class="quote-terminal-box">
+            <div class="quote-terminal-header">[ SYSTEM ADVISORY ]</div>
+            <p id="motivational-quote" class="quote-text">
+              "Discipline in the gym fuels focus at your desk. Rise above stagnation."
+            </p>
+          </div>
+        </div>
+
+        <button type="button" class="system-btn primary-btn" style="margin-top: 14px; width: 100%;" onclick="openLogBookModal()">
+          📖 WRITE DAILY LOG (+30 EXP)
         </button>
-      </div>
-    </aside>
+      </section>
+    </div>
 
     <!-- Bottom Dock: Hanging XP Bar & Hunter Stats -->
     <footer class="hud-bottom-dock panel-glow">

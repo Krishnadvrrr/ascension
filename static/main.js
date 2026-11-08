@@ -1074,6 +1074,101 @@ function completeRedGateRaid() {
   }).then(() => loadCharacterData());
 }
 
+
+// =========================================
+// 17B. EXECUTIVE FOCUS PROTOCOL (DASHBOARD)
+// =========================================
+let dashboardTimerMinutes = 25;
+let dashboardTimerSeconds = 0;
+let dashboardTimerInterval = null;
+let isDashboardTimerRunning = false;
+
+function initDashboardTimer() {
+  updateDashboardTimerDisplay();
+}
+
+function setDashboardTimer(mins, btnElem) {
+  if (dashboardTimerInterval) clearInterval(dashboardTimerInterval);
+  isDashboardTimerRunning = false;
+  dashboardTimerMinutes = mins;
+  dashboardTimerSeconds = 0;
+  updateDashboardTimerDisplay();
+  const startBtn = document.getElementById("btn-focus-start");
+  if (startBtn) startBtn.innerHTML = "<span>▶ START FOCUS</span>";
+  document.querySelectorAll(".focus-preset-btn").forEach(b => b.classList.remove("active"));
+  if (btnElem) btnElem.classList.add("active");
+}
+
+function updateDashboardTimerDisplay() {
+  const display = document.getElementById("focus-clock-display");
+  const fill = document.getElementById("focus-progress-fill");
+  if (!display) return;
+  const m = String(dashboardTimerMinutes).padStart(2, '0');
+  const s = String(dashboardTimerSeconds).padStart(2, '0');
+  display.innerText = `${m}:${s}`;
+  if (fill) {
+    const activeChip = document.querySelector(".focus-preset-btn.active");
+    const totalMins = activeChip ? parseInt(activeChip.innerText) || 25 : 25;
+    const totalSecs = totalMins * 60;
+    const currentSecs = dashboardTimerMinutes * 60 + dashboardTimerSeconds;
+    fill.style.width = `${Math.max(0, Math.min(100, (currentSecs / totalSecs) * 100))}%`;
+  }
+}
+
+function toggleDashboardFocus() {
+  const startBtn = document.getElementById("btn-focus-start");
+  if (isDashboardTimerRunning) {
+    clearInterval(dashboardTimerInterval);
+    isDashboardTimerRunning = false;
+    if (startBtn) startBtn.innerHTML = "<span>▶ RESUME</span>";
+  } else {
+    isDashboardTimerRunning = true;
+    if (startBtn) startBtn.innerHTML = "<span>⏸ PAUSE</span>";
+    dashboardTimerInterval = setInterval(() => {
+      if (dashboardTimerSeconds === 0) {
+        if (dashboardTimerMinutes === 0) {
+          clearInterval(dashboardTimerInterval);
+          isDashboardTimerRunning = false;
+          if (startBtn) startBtn.innerHTML = "<span>▶ START FOCUS</span>";
+          showSystemHologram("FOCUS PROTOCOL COMPLETE ⚡", "Executive deep work interval finished. +25 EXP awarded.");
+          playSystemSound("levelup");
+          
+          fetch(`${BASE_URL}/log-task`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              character_id: currentHunterId,
+              name: "[FOCUS PROTOCOL] Executive Deep Work Session",
+              area: "academics",
+              description: "Completed distraction-free focus interval",
+              difficulty: "medium"
+            })
+          }).then(() => loadCharacterData()).catch(() => {});
+          
+          return;
+        }
+        dashboardTimerMinutes--;
+        dashboardTimerSeconds = 59;
+      } else {
+        dashboardTimerSeconds--;
+      }
+      updateDashboardTimerDisplay();
+    }, 1000);
+  }
+}
+
+function resetDashboardFocus() {
+  if (dashboardTimerInterval) clearInterval(dashboardTimerInterval);
+  isDashboardTimerRunning = false;
+  const activeChip = document.querySelector(".focus-preset-btn.active");
+  const mins = activeChip ? parseInt(activeChip.innerText) || 25 : 25;
+  dashboardTimerMinutes = mins;
+  dashboardTimerSeconds = 0;
+  updateDashboardTimerDisplay();
+  const startBtn = document.getElementById("btn-focus-start");
+  if (startBtn) startBtn.innerHTML = "<span>▶ START FOCUS</span>";
+}
+
 // =========================================
 // 18. "ARISE" SHADOW ARMY SYSTEM
 // =========================================
@@ -2191,7 +2286,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSplitDaysEditor();
   checkTodayLogBookStatus();
   updateDirectivesPreview();
-  initCreatorIntro();
+  // initCreatorIntro(); - Suppressed for executive dark mode
+  initDashboardTimer();
   initModalOverlayControls();
 
   // Check if hunter is cached
