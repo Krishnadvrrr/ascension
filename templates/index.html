@@ -242,6 +242,14 @@
         <span class="menu-item-arrow">➔</span>
       </button>
 
+      <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openProfileSettings();">
+        <span class="menu-item-icon">⚙</span>
+        <div class="menu-item-text">
+          <span class="menu-item-title">EDIT PROFILE & SPLIT</span>
+          <span class="menu-item-subtitle">Workout, education & extra activities</span>
+        </div>
+        <span class="menu-item-arrow">➔</span>
+      </button>
       <!-- 3. Manage Quests -->
       <button type="button" class="drawer-menu-item" onclick="closeMobileDrawer(); openManageQuestsModal();">
         <span class="menu-item-icon">⚙</span>
@@ -361,6 +369,7 @@
         <button type="button" class="hud-action-btn voice-toggle-btn" id="voice-toggle-btn" onclick="toggleSystemVoice()" title="Toggle Robotic System Voice">
           <span id="voice-icon">🔊</span> VOICE: ON
         </button>
+        <button type="button" class="system-logout-btn" onclick="openProfileSettings()">[ ⚙ EDIT PROFILE & SPLIT ]</button>
         <button type="button" class="system-logout-btn" onclick="logoutHunter()">[ ↩ RE-LOGIN ]</button>
       </div>
     </header>
@@ -777,7 +786,7 @@
         <div class="onboard-footer-pinned">
           <div class="onboard-nav-row">
             <button type="button" class="system-btn cancel-btn" onclick="goToOnboardStep(2)">← BACK</button>
-            <button type="button" class="system-btn primary-btn" onclick="submitOnboardingDirectives()">
+            <button type="button" id="profile-save-button" class="system-btn primary-btn" onclick="submitOnboardingDirectives()">
               ⚡ AWAKEN & COMMENCE DISCIPLINE
             </button>
           </div>
@@ -1100,6 +1109,6 @@
   </div>
 
   <!-- Script loaded last after DOM is ready -->
-  <script src="{{ url_for('static', filename='main.js') }}?v=2.3-restored"></script>
+  <script src="{{ url_for('static', filename='main.js') }}?v=2.4-profile-edit"></script>
 </body>
 </html>

@@ -686,6 +686,8 @@ def save_onboarding():
     current_weight = float(data.get('current_weight') or 75.0)
     target_weight = float(data.get('target_weight') or 75.0)
 
+    was_onboarded = character.onboarding_completed
+    weight_changed = character.current_weight != current_weight
     character.education_level = education_level
     character.education_detail = education_detail
     character.ecc_skill = ecc_skill
@@ -698,13 +700,16 @@ def save_onboarding():
 
     # Seed customized daily quests
     custom_quests = data.get('custom_daily_quests')
+    if was_onboarded and custom_quests is None:
+        custom_quests = json.loads(character.custom_daily_quests or '[]')
     if not custom_quests or len(custom_quests) < 5:
         custom_quests = get_default_quests(character)
     character.custom_daily_quests = json.dumps(custom_quests)
 
     # Record initial weight log
-    w_log = WeightLog(character_id=character.id, weight=current_weight)
-    db.session.add(w_log)
+    if not was_onboarded or weight_changed:
+        w_log = WeightLog(character_id=character.id, weight=current_weight)
+        db.session.add(w_log)
 
     db.session.commit()
 

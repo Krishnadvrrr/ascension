@@ -1306,7 +1306,49 @@ const defaultSplitDays = [
   { day: 7, label: "DAY 7 // SUN", name: "Scheduled Rest Day (Recovery Protocol)", is_rest: true, exercises: "Active Recovery, Sauna / Warm Bath, Macro Meal Prep" }
 ];
 
+let editingProfile = false;
+
+async function openProfileSettings() {
+  try {
+    const response = await fetch(`${BASE_URL}/character/${currentHunterId}`);
+    if (!response.ok) throw new Error('Unable to load your profile. Please sign in again.');
+    const profile = await response.json();
+    openOnboardingModal();
+    editingProfile = true;
+    document.getElementById('profile-save-button').textContent = 'SAVE CHANGES';
+    const setValue = (id, value) => {
+      const input = document.getElementById(id);
+      if (!input || value == null) return;
+      if (input.tagName === 'SELECT' && !Array.from(input.options).some(option => option.value === value)) {
+        input.add(new Option(value, value));
+      }
+      input.value = value;
+    };
+    selectEduType(profile.education_level);
+    const detail = (profile.education_detail || '').match(/^(.*) \(([^()]*)\)$/);
+    const prefix = profile.education_level === 'college' ? 'college' : 'school';
+    setValue(`onboard-${prefix}-${prefix === 'college' ? 'degree' : 'grade'}`, detail ? detail[1] : profile.education_detail);
+    setValue(`onboard-${prefix}-${prefix === 'college' ? 'year' : 'board'}`, detail ? detail[2] : '');
+    setValue('onboard-ecc-skill', profile.ecc_skill);
+    setValue('onboard-weight-goal', profile.weight_goal_type);
+    setValue('onboard-current-weight', profile.current_weight);
+    setValue('onboard-target-weight', profile.target_weight);
+    for (let day = 1; day <= 7; day++) {
+      const split = profile.workout_split[`day_${day}`];
+      if (!split) continue;
+      setValue(`split-name-day-${day}`, split.name);
+      setValue(`split-exercises-day-${day}`, Array.isArray(split.exercises) ? split.exercises.join(', ') : split.exercises || '');
+      document.getElementById(`split-rest-day-${day}`).checked = Boolean(split.is_rest);
+    }
+    updateDirectivesPreview();
+  } catch (error) {
+    showSystemHologram('PROFILE ERROR', error.message);
+  }
+}
+
 function openOnboardingModal() {
+  editingProfile = false;
+  document.getElementById('profile-save-button').textContent = '⚡ AWAKEN & COMMENCE DISCIPLINE';
   const modal = document.getElementById("onboarding-modal");
   if (!modal) return;
   modal.classList.remove("hidden");
@@ -1534,8 +1576,8 @@ async function submitOnboardingDirectives() {
 
     closeOnboardingModal();
     playSystemSound("levelup");
-    speakSystemDirective("System Awakening Protocol completed. Life directives, workout split, and academic goals registered.");
-    showSystemHologram("AWAKENING COMPLETE ⚡", "Discipline Protocol registered. 5+ Daily Objectives active.");
+    speakSystemDirective(editingProfile ? 'Your profile changes have been saved.' : 'System Awakening Protocol completed.');
+    showSystemHologram(editingProfile ? 'PROFILE UPDATED' : 'AWAKENING COMPLETE ⚡', 'Your workout split, education and extra skill have been saved.');
 
     await loadCharacterData();
     await loadTasks();
