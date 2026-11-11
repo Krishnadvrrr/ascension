@@ -852,8 +852,8 @@ def get_user_quests(character_id):
 def save_user_quests():
     """
     Validate & save active daily quests:
-    - Minimum 5 quests total
-    - Minimum 2 Gym
+    - Minimum 6 quests total
+    - Minimum 3 Gym
     - Minimum 2 Academics
     - Minimum 1 ECC
     """
@@ -865,6 +865,13 @@ def save_user_quests():
 
     quests = data.get('quests') or []
 
+    if not isinstance(quests, list) or any(
+        not isinstance(q, dict) or not isinstance(q.get('name'), str)
+        or not q['name'].strip() or q.get('category') not in {'gym', 'academics', 'ecc', 'other'}
+        for q in quests
+    ):
+        return jsonify({'error': 'Each quest needs a name and a valid category.'}), 400
+
     # Validation
     gym_count = sum(1 for q in quests if q.get('category') == 'gym')
     acad_count = sum(1 for q in quests if q.get('category') == 'academics')
@@ -872,10 +879,10 @@ def save_user_quests():
     total_count = len(quests)
 
     errors = []
-    if total_count < 5:
-        errors.append(f"Total quests must be at least 5 (currently {total_count}).")
-    if gym_count < 2:
-        errors.append(f"Must have at least 2 Gym quests (currently {gym_count}).")
+    if total_count < 6:
+        errors.append(f"Total quests must be at least 6 (currently {total_count}).")
+    if gym_count < 3:
+        errors.append(f"Must have at least 3 Gym quests (currently {gym_count}).")
     if acad_count < 2:
         errors.append(f"Must have at least 2 Academics quests (currently {acad_count}).")
     if ecc_count < 1:

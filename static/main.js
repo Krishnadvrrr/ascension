@@ -609,7 +609,7 @@ async function loadTasks() {
     activeQuestsList.forEach((task, idx) => {
       const isCompleted = task.completed || false;
       const cat = task.category || "gym";
-      const badgeText = cat === 'gym' ? 'GYM' : (cat === 'academics' ? 'ACAD' : 'ECC');
+      const badgeText = {gym: 'GYM', academics: 'ACAD', ecc: 'ECC', other: 'LIFE'}[cat] || 'LIFE';
       const li = document.createElement("li");
       li.className = "task-item";
       li.innerHTML = `
@@ -1887,8 +1887,8 @@ function renderManageQuestsList() {
   const totalVal = document.getElementById("quota-total-val");
 
   if (gymVal) {
-    gymVal.innerText = `${gymCount} / 2 (MIN)`;
-    gymVal.style.color = gymCount >= 2 ? "#86efac" : "#ef4444";
+    gymVal.innerText = `${gymCount} / 3 (MIN)`;
+    gymVal.style.color = gymCount >= 3 ? "#86efac" : "#ef4444";
   }
   if (acadVal) {
     acadVal.innerText = `${acadCount} / 2 (MIN)`;
@@ -1899,8 +1899,8 @@ function renderManageQuestsList() {
     eccVal.style.color = eccCount >= 1 ? "#fde68a" : "#ef4444";
   }
   if (totalVal) {
-    totalVal.innerText = `${totalCount} / 5 (MIN)`;
-    totalVal.style.color = totalCount >= 5 ? "#a855f7" : "#ef4444";
+    totalVal.innerText = `${totalCount} / 6 (MIN)`;
+    totalVal.style.color = totalCount >= 6 ? "#a855f7" : "#ef4444";
   }
 
   managerQuests.forEach((q, idx) => {
@@ -1908,39 +1908,23 @@ function renderManageQuestsList() {
     const cat = q.category || 'gym';
     row.className = `manage-quest-row cat-${cat}`;
 
-    const catLabel = cat === 'gym' ? 'GYM' : (cat === 'academics' ? 'ACAD' : 'ECC');
-
-    let disableDelete = false;
-    let titleMsg = "Remove objective";
-    if (totalCount <= 5) {
-      disableDelete = true;
-      titleMsg = "Cannot delete: Minimum 5 total daily quests required.";
-    } else if (cat === 'gym' && gymCount <= 2) {
-      disableDelete = true;
-      titleMsg = "Cannot delete: Minimum 2 Gym quests required.";
-    } else if (cat === 'academics' && acadCount <= 2) {
-      disableDelete = true;
-      titleMsg = "Cannot delete: Minimum 2 Academics quests required.";
-    } else if (cat === 'ecc' && eccCount <= 1) {
-      disableDelete = true;
-      titleMsg = "Cannot delete: Minimum 1 Extracurricular quest required.";
-    }
+    const catLabel = {gym: 'GYM', academics: 'ACAD', ecc: 'ECC', other: 'LIFE'}[cat] || 'LIFE';
 
     row.innerHTML = `
       <div class="quest-row-left">
         <span class="quest-cat-badge ${cat}">[${catLabel}]</span>
-        <span class="quest-row-title">${q.name}</span>
+        <span class="quest-row-title"></span>
       </div>
       <button 
         type="button" 
         class="quest-delete-btn" 
-        ${disableDelete ? 'disabled' : ''} 
-        title="${titleMsg}"
+        title="Remove objective from this draft"
         onclick="deleteQuestFromManager(${idx})"
       >
         ✕ REMOVE
       </button>
     `;
+    row.querySelector('.quest-row-title').textContent = q.name;
     container.appendChild(row);
   });
 }
@@ -1948,27 +1932,6 @@ function renderManageQuestsList() {
 function deleteQuestFromManager(idx) {
   const q = managerQuests[idx];
   if (!q) return;
-
-  const gymCount = managerQuests.filter(item => item.category === 'gym').length;
-  const acadCount = managerQuests.filter(item => item.category === 'academics').length;
-  const eccCount = managerQuests.filter(item => item.category === 'ecc').length;
-
-  if (managerQuests.length <= 5) {
-    showSystemHologram("QUOTA LOCK 🔒", "Cannot remove: You must maintain at least 5 daily quests.");
-    return;
-  }
-  if (q.category === 'gym' && gymCount <= 2) {
-    showSystemHologram("QUOTA LOCK 🔒", "Cannot remove: Minimum 2 Gym quests required.");
-    return;
-  }
-  if (q.category === 'academics' && acadCount <= 2) {
-    showSystemHologram("QUOTA LOCK 🔒", "Cannot remove: Minimum 2 Academics quests required.");
-    return;
-  }
-  if (q.category === 'ecc' && eccCount <= 1) {
-    showSystemHologram("QUOTA LOCK 🔒", "Cannot remove: Minimum 1 Extracurricular quest required.");
-    return;
-  }
 
   managerQuests.splice(idx, 1);
   playSystemSound("quest");
@@ -1986,7 +1949,7 @@ function addNewQuestFromManager() {
     return;
   }
 
-  const prefix = category === 'gym' ? '[GYM]' : (category === 'academics' ? '[ACADEMICS]' : '[ECC SKILL]');
+  const prefix = {gym: '[GYM]', academics: '[ACADEMICS]', ecc: '[ECC SKILL]', other: '[LIFE]'}[category] || '[LIFE]';
   const formattedName = name.startsWith("[") ? name : `${prefix} ${name}`;
 
   managerQuests.push({
@@ -2008,8 +1971,12 @@ async function saveQuestsFromManager() {
   const acadCount = managerQuests.filter(q => q.category === 'academics').length;
   const eccCount = managerQuests.filter(q => q.category === 'ecc').length;
 
-  if (managerQuests.length < 5 || gymCount < 2 || acadCount < 2 || eccCount < 1) {
-    showSystemHologram("QUOTA VIOLATION ⚠", "Constraint: Must have at least 5 quests (min 2 Gym, min 2 Academics, min 1 ECC).", true);
+  if (gymCount < 3 || acadCount < 2 || eccCount < 1) {
+    const missing = [];
+    if (gymCount < 3) missing.push(`${3 - gymCount} Gym`);
+    if (acadCount < 2) missing.push(`${2 - acadCount} Academic`);
+    if (eccCount < 1) missing.push(`${1 - eccCount} Extracurricular`);
+    showSystemHologram("MORE QUESTS NEEDED", `Before saving, add ${missing.join(', ')} quest(s). Your draft is still here.`, true);
     return;
   }
 
@@ -2032,7 +1999,7 @@ async function saveQuestsFromManager() {
     closeManageQuestsModal();
     playSystemSound("quest");
     speakSystemDirective("Daily directives updated.");
-    showSystemHologram("DIRECTIVES UPDATED ⚙️", "Your tailored 5+ daily quests are now active.");
+    showSystemHologram("DIRECTIVES UPDATED ⚙️", "Your custom daily quests are now active.");
     await loadTasks();
   } catch (err) {
     console.error("Error saving quests:", err);

@@ -255,7 +255,7 @@
         <span class="menu-item-icon">⚙</span>
         <div class="menu-item-text">
           <span class="menu-item-title">MANAGE QUESTS</span>
-          <span class="menu-item-subtitle">Customize 5+ Directives</span>
+          <span class="menu-item-subtitle">Choose your daily quests</span>
         </div>
         <span class="menu-item-arrow">➔</span>
       </button>
@@ -412,7 +412,7 @@
           <span class="warning-icon">⚠</span>
           <h2>DAILY QUESTS</h2>
         </div>
-        <button type="button" class="quest-header-btn" onclick="openManageQuestsModal()" title="Manage / Edit Quests (Min 2 Gym, 2 Academics, 1 ECC)">
+        <button type="button" class="quest-header-btn" onclick="openManageQuestsModal()" title="Manage / Edit Quests (Min 3 Gym, 2 Academics, 1 Extracurricular on save)">
           ⚙ MANAGE
         </button>
       </div>
@@ -755,7 +755,7 @@
           <input type="text" id="onboard-ecc-skill" value="Web Development & Coding" placeholder="e.g. Full-Stack Web Dev, Music / Guitar, Competitive Coding, German Language" required />
         </div>
 
-        <h3 class="step-subheading" style="margin-top: 16px;">YOUR BALANCED 5+ DAILY DIRECTIVES (PREVIEW)</h3>
+        <h3 class="step-subheading" style="margin-top: 16px;">YOUR BALANCED 6+ DAILY DIRECTIVES (PREVIEW)</h3>
         <div class="preview-directives-box" id="onboard-directives-preview">
           <div class="preview-quest-item gym">
             <span class="preview-badge">[GYM]</span>
@@ -804,14 +804,14 @@
       </div>
       <h2 class="modal-title">CUSTOMIZE DAILY DIRECTIVES</h2>
       <p class="modal-subtitle">
-        Maintain at least 5 active daily quests (minimum 2 Gym, 2 Academics, and 1 Extracurricular).
+        Remove or replace any quest while editing. Before saving, include at least 3 Gym, 2 Academic, and 1 Extracurricular quest. Add other daily-life goals too.
       </p>
 
       <!-- Quota Indicator Summary -->
       <div class="quota-summary-box">
         <div class="quota-chip" id="quota-chip-gym">
           <span class="quota-name">🏋️ GYM:</span>
-          <span class="quota-val" id="quota-gym-val">2 / 2 (MIN)</span>
+          <span class="quota-val" id="quota-gym-val">0 / 3 (MIN)</span>
         </div>
         <div class="quota-chip" id="quota-chip-acad">
           <span class="quota-name">📚 STUDY:</span>
@@ -823,7 +823,7 @@
         </div>
         <div class="quota-chip total" id="quota-chip-total">
           <span class="quota-name">🎯 TOTAL:</span>
-          <span class="quota-val" id="quota-total-val">5 / 5 (MIN)</span>
+          <span class="quota-val" id="quota-total-val">0 / 6 (MIN)</span>
         </div>
       </div>
 
@@ -846,6 +846,7 @@
               <option value="gym">🏋️ Gym & Physical</option>
               <option value="academics">📚 Academics & Study</option>
               <option value="ecc">⚡ Extracurricular (ECC)</option>
+              <option value="other">🏠 Other daily-life goal</option>
             </select>
           </div>
         </div>
@@ -1109,6 +1110,6 @@
   </div>
 
   <!-- Script loaded last after DOM is ready -->
-  <script src="{{ url_for('static', filename='main.js') }}?v=2.5-panel-spacing"></script>
+  <script src="{{ url_for('static', filename='main.js') }}?v=2.6-quest-drafts"></script>
 </body>
 </html>
