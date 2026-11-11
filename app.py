@@ -1,12 +1,18 @@
 import json
 import sqlite3
-from flask import Flask, request, jsonify, render_template
+import os
+from functools import wraps
+from flask import Flask, request, jsonify, render_template, session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-change-me')
+default_cookie_secure = 'true' if os.environ.get('RENDER') else 'false'
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE', default_cookie_secure).lower() == 'true')
 
 # Database configuration with concurrency optimization for multiple users
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///discipline_tracker.db'
@@ -20,6 +26,33 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 db = SQLAlchemy(app)
+
+
+@app.before_request
+def enforce_character_ownership():
+    """Prevent one signed-in Hunter from requesting another Hunter's records."""
+    if request.path.startswith('/static/') or request.path in {'/', '/demo'}:
+        return None
+    if request.path.startswith('/auth/') or request.path in {'/login', '/register'}:
+        return None
+
+    target_id = None
+    if request.view_args:
+        target_id = request.view_args.get('character_id')
+    if target_id is None and request.is_json:
+        target_id = (request.get_json(silent=True) or {}).get('character_id')
+    if target_id is None:
+        return None
+
+    current_id = session.get('character_id')
+    if not current_id:
+        return jsonify({'error': 'Please sign in first.'}), 401
+    try:
+        if int(target_id) != int(current_id):
+            return jsonify({'error': 'You can only access your own Hunter records.'}), 403
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid Hunter account.'}), 400
+    return None
 
 # Enable SQLite Write-Ahead Logging (WAL) for high concurrency
 @event.listens_for(Engine, "connect")
@@ -348,7 +381,7 @@ def check_and_apply_penalties(character):
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Authenticate or awaken a Hunter profile"""
+    """Authenticate an existing Hunter profile."""
     data = request.json or {}
     username = (data.get('username') or data.get('name') or '').strip()
     password = (data.get('password') or '').strip()
@@ -359,21 +392,32 @@ def login():
     character = Character.query.filter(db.func.lower(Character.name) == username.lower()).first()
     
     if not character:
-        character = Character(name=username, password=password if password else 'hunter123')
-        db.session.add(character)
-        db.session.commit()
         return jsonify({
-            'message': 'System awakened! New Hunter registered.',
-            'character': character.to_dict(),
-            'is_new': True,
-            'penalty': {'penalty_applied': False}
-        }), 200
-    
-    if password and character.password and character.password != password:
+            'error': 'Hunter account not found. Please sign up first.',
+            'code': 'SIGNUP_REQUIRED'
+        }), 404
+
+    if not password:
+        return jsonify({'error': 'Hunter passcode is required.'}), 400
+
+    stored_password = character.password or ''
+    valid_password = False
+    try:
+        valid_password = check_password_hash(stored_password, password)
+    except (ValueError, TypeError):
+        # Migrate older accounts that were stored before password hashing.
+        valid_password = stored_password == password
+        if valid_password:
+            character.password = generate_password_hash(password)
+            db.session.commit()
+
+    if not valid_password:
         return jsonify({'error': 'Invalid Hunter passcode. Access denied.'}), 401
     
     # Check for consecutive days inaction penalty & logbook penalty
     penalty_info = check_and_apply_penalties(character)
+    session.clear()
+    session['character_id'] = character.id
     
     return jsonify({
         'message': 'Access granted. Welcome back, Hunter.',
@@ -384,15 +428,25 @@ def login():
 
 @app.route('/auth/google', methods=['POST'])
 def auth_google():
-    """Authenticate or awaken a Hunter using Google account/credentials"""
+    """Verify a Google Identity Services ID token and start a session."""
     data = request.json or {}
-    email = (data.get('email') or '').strip().lower()
-    name = (data.get('name') or '').strip()
-    google_id = (data.get('google_id') or data.get('sub') or '').strip()
-    avatar_url = (data.get('avatar_url') or data.get('picture') or '').strip()
+    credential = data.get('credential')
+    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+    if not credential or not client_id:
+        return jsonify({'error': 'Google sign-in is not configured.'}), 503
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        claims = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
+        if not claims.get('email_verified'):
+            raise ValueError('Google email is not verified')
+    except Exception:
+        return jsonify({'error': 'Google could not verify this sign-in. Please try again.'}), 401
 
-    if not email and not name and not google_id:
-        return jsonify({'error': 'Google authentication data required'}), 400
+    email = (claims.get('email') or '').strip().lower()
+    name = (claims.get('name') or email.split('@')[0]).strip()
+    google_id = claims['sub']
+    avatar_url = (claims.get('picture') or '')[:300]
 
     if not name and email:
         name = email.split('@')[0].capitalize()
@@ -405,8 +459,6 @@ def auth_google():
         character = Character.query.filter_by(google_id=google_id).first()
     if not character and email:
         character = Character.query.filter_by(email=email).first()
-    if not character:
-        character = Character.query.filter(db.func.lower(Character.name) == name.lower()).first()
 
     is_new = False
     if not character:
@@ -429,13 +481,15 @@ def auth_google():
         if google_id and not character.google_id:
             character.google_id = google_id
             updated = True
-        if avatar_url and not character.avatar_url:
+        if avatar_url and character.avatar_url != avatar_url:
             character.avatar_url = avatar_url
             updated = True
         if updated:
             db.session.commit()
 
     penalty_info = check_and_apply_penalties(character)
+    session.clear()
+    session['character_id'] = character.id
 
     return jsonify({
         'message': f'Google Awakening Complete. Welcome Hunter {character.name}.',
@@ -445,22 +499,43 @@ def auth_google():
     }), 200
 
 
+@app.get('/auth/config')
+def google_auth_config():
+    return jsonify({'client_id': os.environ.get('GOOGLE_CLIENT_ID', '')})
+
+
+@app.get('/auth/session')
+def auth_session():
+    character = db.session.get(Character, session.get('character_id')) if session.get('character_id') else None
+    return jsonify({'authenticated': bool(character), 'character': character.to_dict() if character else None})
+
+
+@app.post('/auth/logout')
+def auth_logout():
+    session.clear()
+    return jsonify({'ok': True})
+
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json or {}
     name = (data.get('name') or data.get('username') or '').strip()
-    password = (data.get('password') or 'hunter123').strip()
+    password = (data.get('password') or '').strip()
     
     if not name:
         return jsonify({'error': 'Hunter Codename is required'}), 400
+    if len(password) < 8:
+        return jsonify({'error': 'Passcode must be at least 8 characters.'}), 400
     
     existing = Character.query.filter(db.func.lower(Character.name) == name.lower()).first()
     if existing:
         return jsonify({'error': 'Hunter Codename already registered'}), 400
     
-    character = Character(name=name, password=password)
+    character = Character(name=name, password=generate_password_hash(password))
     db.session.add(character)
     db.session.commit()
+    session.clear()
+    session['character_id'] = character.id
     
     return jsonify({
         'message': 'Hunter Awakening Protocol Complete!',

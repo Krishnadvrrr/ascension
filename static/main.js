@@ -271,7 +271,9 @@ async function handleHunterAuth(event) {
     if (!res.ok) {
       if (feedbackElem) {
         feedbackElem.className = "login-feedback error";
-        feedbackElem.innerText = `⚠ ${data.error || "Access Denied: Verification failed."}`;
+        feedbackElem.innerText = data.code === "SIGNUP_REQUIRED"
+          ? "⚠ Account not found. Please use + AWAKEN to sign up first."
+          : `⚠ ${data.error || "Access Denied: Verification failed."}`;
         feedbackElem.classList.remove("hidden");
       }
       submitBtn.disabled = false;
@@ -312,15 +314,36 @@ async function handleHunterAuth(event) {
   }
 }
 
-// Quick Register helper for testing
-function quickRegisterDemo() {
+// Create a new account explicitly; login never creates accounts implicitly.
+async function quickRegisterDemo() {
   const usernameInput = document.getElementById("login-username");
   const passwordInput = document.getElementById("login-password");
-  const newCodename = prompt("Enter new Hunter Codename:", "Sung Jin-Woo");
-  if (newCodename) {
-    usernameInput.value = newCodename;
-    passwordInput.value = "hunter123";
-    document.getElementById("login-form").requestSubmit();
+  const newCodename = prompt("Create your Hunter Codename:", usernameInput.value || "");
+  if (!newCodename) return;
+  const newPassword = prompt("Create a passcode (at least 8 characters):", passwordInput.value || "");
+  if (!newPassword) return;
+
+  try {
+    const res = await fetch(`${BASE_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newCodename.trim(), password: newPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showSystemHologram("SIGN UP ERROR ⚠", data.error || "Unable to create account.");
+      return;
+    }
+    const character = data.character || {};
+    currentHunterId = character.id;
+    currentHunterName = character.name;
+    localStorage.setItem("hunter_profile", JSON.stringify({
+      id: character.id, name: character.name, level: character.level || 1
+    }));
+    trigger3DWelcomeSequence(currentHunterName);
+  } catch (err) {
+    console.error("Registration error:", err);
+    showSystemHologram("SIGN UP ERROR ⚠", "The system could not reach the server.");
   }
 }
 
@@ -481,6 +504,8 @@ function logoutHunter() {
     loginGateway.classList.remove("hidden");
     loginGateway.style.opacity = "1";
   }
+  fetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {});
+  localStorage.removeItem("hunter_profile");
 }
 
 // 7. Apply Profile info to HUD
