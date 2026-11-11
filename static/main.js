@@ -2246,8 +2246,24 @@ function initModalOverlayControls() {
   });
 }
 
+// Keep desktop panels below the full header, including wrapped buttons and fonts.
+function initHudPanelSpacing() {
+  const header = document.querySelector('.hud-top-bar');
+  const hud = document.getElementById('hud-container');
+  if (!header || !hud) return;
+  const updateSpacing = () => {
+    if (window.innerWidth <= 768 || header.offsetHeight === 0) return;
+    // Layout offsets ignore the entrance animation's temporary translation.
+    hud.style.setProperty('--hud-panels-top', `${header.offsetTop + header.offsetHeight + 18}px`);
+  };
+  new ResizeObserver(updateSpacing).observe(header);
+  window.addEventListener('resize', updateSpacing);
+  updateSpacing();
+}
+
 // 13. DOM Ready Initialization
 document.addEventListener("DOMContentLoaded", () => {
+  initHudPanelSpacing();
   initBackgroundSlideshow();
   init3DCardTilt();
   initInteractiveSounds();

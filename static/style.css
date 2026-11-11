@@ -1006,9 +1006,9 @@ body {
 .hud-wing-left {
   position: fixed;
   left: 24px;
-  top: 85px;
+  top: var(--hud-panels-top, 160px);
   width: 270px;
-  max-height: calc(100vh - 195px);
+  max-height: max(120px, calc(100dvh - var(--hud-panels-top, 160px) - 110px));
   overflow-y: auto;
   pointer-events: auto;
   background: rgba(14, 6, 28, 0.82);
@@ -1025,9 +1025,9 @@ body {
 .hud-wing-right {
   position: fixed;
   right: 24px;
-  top: 85px;
+  top: var(--hud-panels-top, 160px);
   width: 330px;
-  max-height: calc(100vh - 195px);
+  max-height: max(120px, calc(100dvh - var(--hud-panels-top, 160px) - 110px));
   overflow-y: auto;
   pointer-events: auto;
   background: rgba(14, 6, 28, 0.82);
