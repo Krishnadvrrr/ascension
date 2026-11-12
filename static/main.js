@@ -1,6 +1,7 @@
 let currentHunterId = 1;
 let currentHunterName = "Sung Jin-Woo";
 const BASE_URL = window.location.origin;
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
 // 1. Array of your custom anime wallpapers (pic1 to pic12)
 const backgroundImages = [
@@ -252,7 +253,7 @@ async function handleHunterAuth(event) {
   const submitBtn = document.getElementById("btn-login");
 
   const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
+  const password = passwordInput.value;
 
   if (!username) return;
 
@@ -291,6 +292,7 @@ async function handleHunterAuth(event) {
       name: currentHunterName,
       level: character.level || 1
     }));
+    await loadUserState();
 
     if (feedbackElem) {
       feedbackElem.className = "login-feedback success";
@@ -305,9 +307,8 @@ async function handleHunterAuth(event) {
 
   } catch (err) {
     console.error("Auth request error:", err);
-    // Fallback in case server isn't reached
-    currentHunterName = username;
-    trigger3DWelcomeSequence(username);
+    feedbackElem.className = 'login-feedback error';
+    feedbackElem.textContent = 'Unable to sign in. Check your connection and try again.';
   } finally {
     submitBtn.disabled = false;
     submitBtn.querySelector(".btn-text").innerText = "AUTHENTICATE & CONNECT";
@@ -318,10 +319,18 @@ async function handleHunterAuth(event) {
 async function quickRegisterDemo() {
   const usernameInput = document.getElementById("login-username");
   const passwordInput = document.getElementById("login-password");
-  const newCodename = prompt("Create your Hunter Codename:", usernameInput.value || "");
-  if (!newCodename) return;
-  const newPassword = prompt("Create a passcode (at least 8 characters):", passwordInput.value || "");
-  if (!newPassword) return;
+  const newCodename = usernameInput.value.trim();
+  const newPassword = passwordInput.value;
+  if (!newCodename) {
+    usernameInput.focus();
+    showSystemHologram("CODENAME REQUIRED", "Enter a new Hunter Codename, then press AWAKEN.");
+    return;
+  }
+  if (newPassword.length < 8) {
+    passwordInput.focus();
+    showSystemHologram("PASSCODE REQUIRED", "Enter a passcode of at least 8 characters, then press AWAKEN.");
+    return;
+  }
 
   try {
     const res = await fetch(`${BASE_URL}/register`, {
@@ -340,6 +349,7 @@ async function quickRegisterDemo() {
     localStorage.setItem("hunter_profile", JSON.stringify({
       id: character.id, name: character.name, level: character.level || 1
     }));
+    await loadUserState();
     trigger3DWelcomeSequence(currentHunterName);
   } catch (err) {
     console.error("Registration error:", err);
@@ -504,7 +514,11 @@ function logoutHunter() {
     loginGateway.classList.remove("hidden");
     loginGateway.style.opacity = "1";
   }
-  fetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {});
+  fetch(`${BASE_URL}/auth/logout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  }).catch(() => {});
   localStorage.removeItem("hunter_profile");
 }
 
@@ -617,7 +631,7 @@ async function loadTasks() {
           <input 
             type="checkbox" 
             data-task-id="${task.id || idx}" 
-            data-task-name="${task.name || 'Daily Quest'}"
+            data-task-name="${escapeHtml(task.name || 'Daily Quest')}"
             data-area="${cat}" 
             data-difficulty="${task.difficulty || 'medium'}"
             data-xp="${task.xp_reward || 20}"
@@ -627,7 +641,7 @@ async function loadTasks() {
           <span class="custom-check"></span>
           <span class="task-name" style="${isCompleted ? 'text-decoration: line-through; opacity: 0.5;' : ''}">
             <span class="quest-cat-badge ${cat}">[${badgeText}]</span>
-            ${task.name || 'Daily Quest Objective'}
+            ${escapeHtml(task.name || 'Daily Quest Objective')}
           </span>
         </label>
         <span class="task-reward">+${task.xp_reward || 20} XP</span>
@@ -665,6 +679,7 @@ async function completeTask(checkbox) {
     });
 
     const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Unable to save this quest.');
     checkbox.disabled = true;
     checkbox.parentElement.querySelector(".task-name").style.textDecoration = "line-through";
     checkbox.parentElement.querySelector(".task-name").style.opacity = "0.5";
@@ -694,6 +709,9 @@ async function completeTask(checkbox) {
     }
   } catch (err) {
     console.error("Failed to log task:", err);
+    checkbox.checked = false;
+    checkbox.disabled = false;
+    showSystemHologram('QUEST NOT SAVED', err.message);
   }
 }
 
@@ -943,8 +961,8 @@ function showSystemHologram(title, message, isRedAlert = false) {
       <span class="toast-badge">[ SYSTEM NOTIFICATION ]</span>
       <button type="button" class="toast-close-btn" onclick="this.parentElement.parentElement.remove()">✕</button>
     </div>
-    <div class="toast-title">${title}</div>
-    <div class="toast-body">${message}</div>
+    <div class="toast-title">${escapeHtml(title)}</div>
+    <div class="toast-body">${escapeHtml(message)}</div>
   `;
 
   container.appendChild(toast);
@@ -1111,6 +1129,43 @@ const defaultShadowSoldiers = [
 
 let shadowArmy = defaultShadowSoldiers;
 
+async function loadUserState() {
+  try {
+    const response = await fetch(`${BASE_URL}/state/${currentHunterId}`);
+    if (!response.ok) throw new Error('Could not load account inventory');
+    const state = await response.json();
+    const unlocked = new Set(state.shadow_unlocks || ['igris']);
+    const equipped = new Set(state.equipped_items || ['lifting_belt', 'creatine']);
+    shadowArmy = defaultShadowSoldiers.map(soldier => ({ ...soldier, unlocked: unlocked.has(soldier.id) }));
+    hunterInventory = defaultInventoryItems.map(item => ({ ...item, equipped: equipped.has(item.id) }));
+    loadShadowArmy();
+    loadInventory();
+  } catch (error) {
+    console.error('Inventory load failed:', error);
+    showSystemHologram('SYNC DELAYED', 'Your account opened, but inventory could not load. Refresh when connected.');
+  }
+}
+
+async function saveUserState() {
+  try {
+    const response = await fetch(`${BASE_URL}/state/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        character_id: currentHunterId,
+        shadow_unlocks: shadowArmy.filter(soldier => soldier.unlocked).map(soldier => soldier.id),
+        equipped_items: hunterInventory.filter(item => item.equipped).map(item => item.id),
+      }),
+    });
+    if (!response.ok) throw new Error('Inventory save failed');
+    return true;
+  } catch (error) {
+    console.error('Inventory save failed:', error);
+    showSystemHologram('SAVE FAILED', 'Inventory was not saved. Please try again.');
+    return false;
+  }
+}
+
 function loadShadowArmy() {
   renderShadowArmy();
   updateShadowCountBadge();
@@ -1154,13 +1209,16 @@ function closeShadowArmyModal() {
   if (modal) modal.classList.add("hidden");
 }
 
-function triggerAriseCinematic() {
+async function triggerAriseCinematic() {
   const nextSoldier = shadowArmy.find(s => !s.unlocked);
   const targetSoldier = nextSoldier || shadowArmy[0];
 
   if (nextSoldier) {
     nextSoldier.unlocked = true;
-    localStorage.setItem("shadow_army_soldiers_v2", JSON.stringify(shadowArmy));
+    if (!await saveUserState()) {
+      nextSoldier.unlocked = false;
+      return;
+    }
   }
 
   document.getElementById("arise-soldier-rank").innerText = targetSoldier.rank;
@@ -1265,7 +1323,7 @@ function closeInventoryModal() {
   if (modal) modal.classList.add("hidden");
 }
 
-function useOrEquipSelectedItem() {
+async function useOrEquipSelectedItem() {
   const item = hunterInventory[selectedItemIndex];
   if (!item) return;
 
@@ -1274,7 +1332,10 @@ function useOrEquipSelectedItem() {
     speakSystemDirective(`${item.name} consumed. Attributes surged.`);
     showSystemHologram("ITEM CONSUMED ✨", `${item.name} granted energy and bonus XP!`);
     item.equipped = false;
-    localStorage.setItem("hunter_inventory_items", JSON.stringify(hunterInventory));
+    if (!await saveUserState()) {
+      item.equipped = true;
+      return;
+    }
     renderInventory();
     selectInventoryItem(selectedItemIndex);
     loadCharacterData();
@@ -1282,7 +1343,10 @@ function useOrEquipSelectedItem() {
   }
 
   item.equipped = !item.equipped;
-  localStorage.setItem("hunter_inventory_items", JSON.stringify(hunterInventory));
+  if (!await saveUserState()) {
+    item.equipped = !item.equipped;
+    return;
+  }
   playSystemSound("quest");
 
   const statusText = item.equipped ? "equipped" : "unequipped";
@@ -1413,14 +1477,14 @@ function renderSplitDaysEditor(customDays) {
           type="text" 
           id="split-name-day-${d.day}" 
           class="split-input-field" 
-          value="${d.name || ''}" 
+          value="${escapeHtml(d.name || '')}"
           placeholder="Split Name (e.g. Push, Pull, Legs, Rest)"
         />
         <input 
           type="text" 
           id="split-exercises-day-${d.day}" 
           class="split-input-field" 
-          value="${d.exercises || ''}" 
+          value="${escapeHtml(d.exercises || '')}"
           placeholder="Key Exercises / Recovery tasks (comma separated)"
         />
       </div>
@@ -2179,10 +2243,10 @@ async function loadLogBookHistory() {
           <span class="log-card-stars">${starsHtml}</span>
         </div>
         <div class="log-card-body">
-          ${l.gym_summary ? `<div><span class="log-field-tag">🏋️ GYM:</span> ${l.gym_summary}</div>` : ''}
-          ${l.academics_summary ? `<div><span class="log-field-tag">📚 STUDY:</span> ${l.academics_summary}</div>` : ''}
-          ${l.ecc_summary ? `<div><span class="log-field-tag">⚡ SKILL:</span> ${l.ecc_summary}</div>` : ''}
-          ${l.reflection ? `<div><span class="log-field-tag">💭 MINDSET:</span> ${l.reflection}</div>` : ''}
+          ${l.gym_summary ? `<div><span class="log-field-tag">🏋️ GYM:</span> ${escapeHtml(l.gym_summary)}</div>` : ''}
+          ${l.academics_summary ? `<div><span class="log-field-tag">📚 STUDY:</span> ${escapeHtml(l.academics_summary)}</div>` : ''}
+          ${l.ecc_summary ? `<div><span class="log-field-tag">⚡ SKILL:</span> ${escapeHtml(l.ecc_summary)}</div>` : ''}
+          ${l.reflection ? `<div><span class="log-field-tag">💭 MINDSET:</span> ${escapeHtml(l.reflection)}</div>` : ''}
         </div>
       `;
       list.appendChild(card);

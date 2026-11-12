@@ -1,21 +1,45 @@
 import json
 import sqlite3
 import os
-from functools import wraps
+import secrets
+import hmac
+import hashlib
+import math
+import time
+from pathlib import Path
 from flask import Flask, request, jsonify, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import event
+from sqlalchemy import event, text, inspect
+from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.engine import make_url
 from sqlalchemy.engine import Engine
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-change-me')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+if not app.secret_key:
+    if os.environ.get('RENDER'):
+        raise RuntimeError('Set FLASK_SECRET_KEY in Render before starting the app.')
+    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    secret_file = Path(app.instance_path) / 'session-secret'
+    if not secret_file.exists():
+        secret_file.write_text(secrets.token_hex(32), encoding='utf-8')
+    app.secret_key = secret_file.read_text(encoding='utf-8').strip()
 default_cookie_secure = 'true' if os.environ.get('RENDER') else 'false'
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE', default_cookie_secure).lower() == 'true')
+if os.environ.get('RENDER') and len(app.secret_key) < 32:
+    raise RuntimeError('FLASK_SECRET_KEY must contain at least 32 random characters.')
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=bool(os.environ.get('RENDER')) or os.environ.get('COOKIE_SECURE', default_cookie_secure).lower() == 'true', MAX_CONTENT_LENGTH=128 * 1024, PERMANENT_SESSION_LIFETIME=timedelta(days=7))
 
 # Database configuration with concurrency optimization for multiple users
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///discipline_tracker.db'
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///discipline_tracker.db')
+if database_url.startswith(('postgres://', 'postgresql://')):
+    database_url = 'postgresql+psycopg://' + database_url.split('://', 1)[1]
+if os.environ.get('RENDER') and not database_url.startswith('postgresql'):
+    raise RuntimeError('Configure a persistent PostgreSQL DATABASE_URL before deploying to Render.')
+if os.environ.get('RENDER'):
+    database_url = make_url(database_url).update_query_dict({'sslmode': 'verify-full', 'sslrootcert': 'system'}).render_as_string(hide_password=False)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'connect_args': {
@@ -25,15 +49,60 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True
 }
 
+if not database_url.startswith('sqlite:'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_size': 2, 'max_overflow': 3, 'pool_timeout': 20, 'connect_args': {'connect_timeout': 15, 'prepare_threshold': None}}
 db = SQLAlchemy(app)
+
+
+@app.before_request
+def validate_write_request():
+    if request.method not in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+        return
+    if request.headers.get('Sec-Fetch-Site') == 'cross-site':
+        return jsonify({'error': 'Open Ascension directly to make changes.'}), 403
+    origin = request.headers.get('Origin')
+    expected = os.environ.get('APP_ORIGIN') or os.environ.get('RENDER_EXTERNAL_URL') or request.host_url.rstrip('/')
+    if origin and origin.rstrip('/') != expected.rstrip('/'):
+        return jsonify({'error': 'Request origin is not allowed.'}), 403
+    if not request.is_json or not isinstance(request.get_json(silent=True), dict):
+        return jsonify({'error': 'A JSON object is required.'}), 400
+    data = request.get_json()
+    # Bound records to protect free-plan storage and reject invalid database values.
+    lengths = {'name': 200, 'title': 200, 'username': 100, 'password': 256,
+               'education_detail': 100, 'ecc_skill': 100, 'split_day_name': 100,
+               'gym_summary': 4000, 'academics_summary': 4000, 'ecc_summary': 4000,
+               'reflection': 4000, 'description': 4000, 'area': 50}
+    for field, limit in lengths.items():
+        if field in data and (not isinstance(data[field], str) or len(data[field]) > limit):
+            return jsonify({'error': f'{field.replace("_", " ")} must be text with at most {limit} characters.'}), 400
+    for field in ('weight', 'current_weight', 'target_weight'):
+        if field in data:
+            try:
+                value = float(data[field])
+                if isinstance(data[field], bool) or not math.isfinite(value) or not 1 <= value <= 700:
+                    raise ValueError()
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Weight must be between 1 and 700 kg.'}), 400
+    if 'rating' in data and (type(data['rating']) is not int or not 1 <= data['rating'] <= 5):
+        return jsonify({'error': 'Rating must be a whole number from 1 to 5.'}), 400
+
+
+@app.after_request
+def protect_response(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'same-origin'
+    if not request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.before_request
 def enforce_character_ownership():
     """Prevent one signed-in Hunter from requesting another Hunter's records."""
-    if request.path.startswith('/static/') or request.path in {'/', '/demo'}:
+    if request.endpoint is None or request.path.startswith('/static/') or request.path in {'/', '/demo'}:
         return None
-    if request.path.startswith('/auth/') or request.path in {'/login', '/register'}:
+    if request.path in {'/auth/google', '/auth/config', '/auth/session', '/auth/logout', '/login', '/register'}:
         return None
 
     target_id = None
@@ -41,18 +110,41 @@ def enforce_character_ownership():
         target_id = request.view_args.get('character_id')
     if target_id is None and request.is_json:
         target_id = (request.get_json(silent=True) or {}).get('character_id')
-    if target_id is None:
-        return None
-
     current_id = session.get('character_id')
     if not current_id:
         return jsonify({'error': 'Please sign in first.'}), 401
+    if target_id is None:
+        return jsonify({'error': 'Account ID is required.'}), 400
     try:
         if int(target_id) != int(current_id):
             return jsonify({'error': 'You can only access your own Hunter records.'}), 403
     except (TypeError, ValueError):
         return jsonify({'error': 'Invalid Hunter account.'}), 400
+    # Serialize writes per account so simultaneous saves cannot lose XP or create duplicate daily logs.
+    needs_lock = request.method != 'GET' or request.endpoint in {'get_character', 'get_user_quests'}
+    if needs_lock and db.engine.dialect.name == 'sqlite':
+        db.session.execute(text('BEGIN IMMEDIATE'))
+    query = db.select(Character).where(Character.id == current_id)
+    if needs_lock:
+        query = query.with_for_update()
+    character = db.session.execute(query).scalar_one_or_none()
+    if character is None:
+        session.clear()
+        return jsonify({'error': 'Account not found. Please sign in again.'}), 401
     return None
+
+
+@app.errorhandler(IntegrityError)
+def handle_integrity_error(error):
+    db.session.rollback()
+    return jsonify({'error': 'This record already exists. Refresh and try again.'}), 409
+
+
+@app.errorhandler(OperationalError)
+def handle_database_unavailable(error):
+    db.session.rollback()
+    app.logger.error('Database temporarily unavailable: %s', type(error).__name__)
+    return jsonify({'error': 'Storage is temporarily unavailable. Please retry; no success has been confirmed.'}), 503
 
 # Enable SQLite Write-Ahead Logging (WAL) for high concurrency
 @event.listens_for(Engine, "connect")
@@ -61,6 +153,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA busy_timeout=30000")
         cursor.close()
 
@@ -117,7 +210,7 @@ class Character(db.Model):
     email = db.Column(db.String(120), default='')
     google_id = db.Column(db.String(120), default='')
     avatar_url = db.Column(db.String(300), default='')
-    password = db.Column(db.String(128), default='hunter123')
+    password = db.Column(db.Text, default='')
     level = db.Column(db.Integer, default=1)
     total_xp = db.Column(db.Integer, default=0)
     current_xp = db.Column(db.Integer, default=0)
@@ -157,6 +250,7 @@ class Character(db.Model):
     attendance_records = db.relationship('Attendance', backref='character', lazy=True, cascade='all, delete-orphan')
     weight_logs = db.relationship('WeightLog', backref='character', lazy=True, cascade='all, delete-orphan')
     logbooks = db.relationship('LogBook', backref='character', lazy=True, cascade='all, delete-orphan')
+    user_state = db.relationship('UserState', backref='character', uselist=False, cascade='all, delete-orphan')
     
     def to_dict(self):
         try:
@@ -300,6 +394,42 @@ class Task(db.Model):
 
 
 # ========================
+# Authentication limits are shared by all workers through the database.
+# Only keyed hashes of identifiers are retained; old windows are pruned.
+class AuthWindow(db.Model):
+    key = db.Column(db.String(64), primary_key=True)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    expires = db.Column(db.Integer, nullable=False)
+
+
+class UserState(db.Model):
+    character_id = db.Column(db.Integer, db.ForeignKey('character.id'), primary_key=True)
+    shadow_unlocks = db.Column(db.Text, nullable=False, default='["igris"]')
+    equipped_items = db.Column(db.Text, nullable=False, default='["lifting_belt","creatine"]')
+
+
+def limit_auth(identity, maximum, seconds=900):
+    if app.config.get('AUTH_RATE_LIMIT_ENABLED', True) is False:
+        return None
+    now = int(time.time())
+    bucket = now // seconds
+    digest = hmac.new(app.secret_key.encode(), f'{identity}:{bucket}'.encode(), hashlib.sha256).hexdigest()
+    if db.engine.dialect.name == 'postgresql':
+        from sqlalchemy.dialects.postgresql import insert
+    else:
+        from sqlalchemy.dialects.sqlite import insert
+    statement = insert(AuthWindow).values(key=digest, attempts=1, expires=(bucket + 1) * seconds)
+    statement = statement.on_conflict_do_update(index_elements=['key'], set_={'attempts': AuthWindow.attempts + 1}).returning(AuthWindow.attempts)
+    attempts = db.session.execute(statement).scalar_one()
+    db.session.execute(db.delete(AuthWindow).where(AuthWindow.expires < now))
+    db.session.commit()
+    if attempts > maximum:
+        response = jsonify({'error': 'Too many sign-in attempts. Please wait before trying again.'})
+        response.status_code = 429
+        response.headers['Retry-After'] = str((bucket + 1) * seconds - now)
+        return response
+
+
 # PENALTY SYSTEM
 # ========================
 
@@ -384,12 +514,17 @@ def login():
     """Authenticate an existing Hunter profile."""
     data = request.json or {}
     username = (data.get('username') or data.get('name') or '').strip()
-    password = (data.get('password') or '').strip()
+    password = data.get('password') or ''
     
     if not username:
         return jsonify({'error': 'Hunter ID / Name is required'}), 400
-    
-    character = Character.query.filter(db.func.lower(Character.name) == username.lower()).first()
+    for identity, maximum in [(f'login-ip:{request.remote_addr}', 300), (f'login-name:{username.lower()}', 20)]:
+        limited = limit_auth(identity, maximum)
+        if limited is not None:
+            return limited
+    if db.engine.dialect.name == 'sqlite':
+        db.session.execute(text('BEGIN IMMEDIATE'))
+    character = Character.query.filter(db.func.lower(Character.name) == username.lower()).with_for_update().first()
     
     if not character:
         return jsonify({
@@ -402,14 +537,17 @@ def login():
 
     stored_password = character.password or ''
     valid_password = False
-    try:
-        valid_password = check_password_hash(stored_password, password)
-    except (ValueError, TypeError):
-        # Migrate older accounts that were stored before password hashing.
-        valid_password = stored_password == password
+    if '$' not in stored_password:
+        # Existing plaintext accounts keep their IDs and history while upgrading.
+        valid_password = bool(stored_password) and stored_password != 'google_oauth_hunter' and hmac.compare_digest(stored_password.encode(), password.encode())
         if valid_password:
             character.password = generate_password_hash(password)
             db.session.commit()
+    else:
+        try:
+            valid_password = check_password_hash(stored_password, password)
+        except (ValueError, TypeError):
+            valid_password = False
 
     if not valid_password:
         return jsonify({'error': 'Invalid Hunter passcode. Access denied.'}), 401
@@ -418,6 +556,7 @@ def login():
     penalty_info = check_and_apply_penalties(character)
     session.clear()
     session['character_id'] = character.id
+    session.permanent = True
     
     return jsonify({
         'message': 'Access granted. Welcome back, Hunter.',
@@ -428,75 +567,8 @@ def login():
 
 @app.route('/auth/google', methods=['POST'])
 def auth_google():
-    """Verify a Google Identity Services ID token and start a session."""
-    data = request.json or {}
-    credential = data.get('credential')
-    client_id = os.environ.get('GOOGLE_CLIENT_ID')
-    if not credential or not client_id:
-        return jsonify({'error': 'Google sign-in is not configured.'}), 503
-    try:
-        from google.oauth2 import id_token
-        from google.auth.transport import requests as google_requests
-        claims = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
-        if not claims.get('email_verified'):
-            raise ValueError('Google email is not verified')
-    except Exception:
-        return jsonify({'error': 'Google could not verify this sign-in. Please try again.'}), 401
-
-    email = (claims.get('email') or '').strip().lower()
-    name = (claims.get('name') or email.split('@')[0]).strip()
-    google_id = claims['sub']
-    avatar_url = (claims.get('picture') or '')[:300]
-
-    if not name and email:
-        name = email.split('@')[0].capitalize()
-    if not name:
-        name = f"Hunter_{google_id[-6:] if len(google_id) >= 6 else 'Google'}"
-
-    # Lookup existing character by google_id, email, or codename
-    character = None
-    if google_id:
-        character = Character.query.filter_by(google_id=google_id).first()
-    if not character and email:
-        character = Character.query.filter_by(email=email).first()
-
-    is_new = False
-    if not character:
-        character = Character(
-            name=name,
-            email=email,
-            google_id=google_id,
-            avatar_url=avatar_url,
-            password='google_oauth_hunter'
-        )
-        db.session.add(character)
-        db.session.commit()
-        is_new = True
-    else:
-        # Update metadata if needed
-        updated = False
-        if email and not character.email:
-            character.email = email
-            updated = True
-        if google_id and not character.google_id:
-            character.google_id = google_id
-            updated = True
-        if avatar_url and character.avatar_url != avatar_url:
-            character.avatar_url = avatar_url
-            updated = True
-        if updated:
-            db.session.commit()
-
-    penalty_info = check_and_apply_penalties(character)
-    session.clear()
-    session['character_id'] = character.id
-
-    return jsonify({
-        'message': f'Google Awakening Complete. Welcome Hunter {character.name}.',
-        'character': character.to_dict(),
-        'is_new': is_new,
-        'penalty': penalty_info
-    }), 200
+    """Google login is disabled until it can be configured safely."""
+    return jsonify({'error': 'Please use your Hunter username and password.'}), 503
 
 
 @app.get('/auth/config')
@@ -520,12 +592,17 @@ def auth_logout():
 def register():
     data = request.json or {}
     name = (data.get('name') or data.get('username') or '').strip()
-    password = (data.get('password') or '').strip()
+    password = data.get('password') or ''
     
     if not name:
         return jsonify({'error': 'Hunter Codename is required'}), 400
-    if len(password) < 8:
+    if len(name) > 100:
+        return jsonify({'error': 'Username must be 100 characters or fewer.'}), 400
+    if len(password) < 8 or len(password) > 256:
         return jsonify({'error': 'Passcode must be at least 8 characters.'}), 400
+    limited = limit_auth(f'register-ip:{request.remote_addr}', 150, 3600)
+    if limited is not None:
+        return limited
     
     existing = Character.query.filter(db.func.lower(Character.name) == name.lower()).first()
     if existing:
@@ -536,6 +613,7 @@ def register():
     db.session.commit()
     session.clear()
     session['character_id'] = character.id
+    session.permanent = True
     
     return jsonify({
         'message': 'Hunter Awakening Protocol Complete!',
@@ -673,9 +751,7 @@ def save_onboarding():
     character_id = data.get('character_id') or 1
     character = Character.query.get(character_id)
     if not character:
-        character = Character.query.first()
-        if not character:
-            return jsonify({'error': 'Hunter not found'}), 404
+        return jsonify({'error': 'Hunter not found'}), 404
 
     education_level = data.get('education_level') or 'college'
     education_detail = (data.get('education_detail') or ('12th Grade CBSE' if education_level == 'school' else 'B.Tech Computer Science')).strip()
@@ -813,7 +889,7 @@ def get_logbook_history(character_id):
     if not character:
         return jsonify({'error': 'Hunter not found'}), 404
 
-    logs = LogBook.query.filter_by(character_id=character.id).order_by(LogBook.date.desc()).limit(30).all()
+    logs = LogBook.query.filter_by(character_id=character.id).order_by(LogBook.date.desc()).all()
     return jsonify({
         'logs': [l.to_dict() for l in logs]
     })
@@ -840,6 +916,10 @@ def get_user_quests(character_id):
         character.custom_daily_quests = json.dumps(custom_quests)
         db.session.commit()
 
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    completed = {(t.name, t.area) for t in Task.query.filter(Task.character_id == character_id, Task.completed_at >= today_start).all()}
+    for quest in custom_quests:
+        quest['completed'] = (quest.get('name'), quest.get('category')) in completed
     return jsonify({
         'quests': custom_quests,
         'education_level': character.education_level or 'college',
@@ -967,7 +1047,8 @@ def mark_attendance():
     today_str = datetime.utcnow().strftime('%Y-%m-%d')
 
     att = Attendance.query.filter_by(character_id=character.id, date=today_str).first()
-    if not att:
+    first_mark_today = att is None
+    if first_mark_today:
         att = Attendance(
             character_id=character.id,
             date=today_str,
@@ -985,7 +1066,7 @@ def mark_attendance():
 
     # Check for 21-day unbroken discipline milestone
     awakening_surge = False
-    if character.split_streak_21 >= 21:
+    if first_mark_today and character.split_streak_21 == 21:
         awakening_surge = True
         surge_xp = 3000
         character.current_xp += surge_xp
@@ -1057,11 +1138,12 @@ def log_task():
     
     character = Character.query.get(character_id)
     if not character:
-        character = Character.query.first()
-        if not character:
-            character = Character(name="Sung Jin-Woo")
-            db.session.add(character)
-            db.session.commit()
+        return jsonify({'error': 'Hunter not found'}), 404
+
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    previous = Task.query.filter(Task.character_id == character.id, Task.name == name, Task.area == area, Task.completed_at >= today_start).first()
+    if previous:
+        return jsonify({'message': 'Already completed today.', 'xp_gained': 0, 'level_up': False, 'character': character.to_dict()}), 200
 
     xp_map = {'easy': 15, 'medium': 20, 'hard': 35}
     xp_reward = xp_map.get(difficulty, 20)
@@ -1142,6 +1224,55 @@ def get_tasks(character_id):
     })
 
 
+@app.get('/state/<int:character_id>')
+def get_user_state(character_id):
+    state = db.session.get(UserState, character_id)
+    return jsonify({
+        'shadow_unlocks': json.loads(state.shadow_unlocks) if state else ['igris'],
+        'equipped_items': json.loads(state.equipped_items) if state else ['lifting_belt', 'creatine'],
+    })
+
+
+@app.post('/state/save')
+def save_user_state():
+    data = request.json
+    allowed_shadows = {'igris', 'iron', 'mage', 'beru'}
+    allowed_items = {'lifting_belt', 'anc_headphones', 'creatine', 'whey_isolate',
+                     'pomodoro_timer', 'lifting_straps', 'preworkout', 'sleep_ring'}
+    shadows = data.get('shadow_unlocks')
+    items = data.get('equipped_items')
+    if (not isinstance(shadows, list) or not isinstance(items, list)
+            or any(type(item) is not str for item in shadows + items)
+            or len(shadows) > len(allowed_shadows) or len(items) > len(allowed_items)
+            or not set(shadows) <= allowed_shadows or not set(items) <= allowed_items):
+        return jsonify({'error': 'Invalid inventory state.'}), 400
+    character_id = int(data['character_id'])
+    state = db.session.get(UserState, character_id)
+    if state is None:
+        state = UserState(character_id=character_id)
+        db.session.add(state)
+    state.shadow_unlocks = json.dumps(sorted(set(shadows) | {'igris'}))
+    state.equipped_items = json.dumps(sorted(set(items)))
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.get('/account/export/<int:character_id>')
+def export_account(character_id):
+    character = db.session.get(Character, character_id)
+    response = jsonify({
+        'profile': character.to_dict(),
+        'tasks': [row.to_dict() for row in character.tasks],
+        'daily_logs': [row.to_dict() for row in character.logbooks],
+        'attendance': [row.to_dict() for row in character.attendance_records],
+        'weight_logs': [row.to_dict() for row in character.weight_logs],
+        'user_state': get_user_state(character_id).json,
+    })
+    response.headers['Content-Disposition'] = 'attachment; filename=ascension-history.json'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -1152,47 +1283,45 @@ def demo():
     return render_template('demo.html')
 
 
-# Safe database migration initialization
+# Additive schema upgrade: fail visibly rather than silently ignoring migration errors.
 with app.app_context():
     db.create_all()
-    try:
-        from sqlalchemy import text
-        with db.engine.connect() as conn:
-            columns = [
-                ("password", "VARCHAR(128) DEFAULT 'hunter123'"),
-                ("email", "VARCHAR(120) DEFAULT ''"),
-                ("google_id", "VARCHAR(120) DEFAULT ''"),
-                ("avatar_url", "VARCHAR(300) DEFAULT ''"),
-                ("selected_goals", "TEXT DEFAULT '[\"gym\"]'"),
-                ("workout_split", "TEXT DEFAULT '{}'"),
-                ("weight_goal_type", "VARCHAR(20) DEFAULT 'maintain'"),
-                ("current_weight", "FLOAT DEFAULT 75.0"),
-                ("target_weight", "FLOAT DEFAULT 75.0"),
-                ("onboarding_completed", "BOOLEAN DEFAULT 0"),
-                ("education_level", "VARCHAR(20) DEFAULT 'college'"),
-                ("education_detail", "VARCHAR(100) DEFAULT 'B.Tech Computer Science'"),
-                ("ecc_skill", "VARCHAR(100) DEFAULT 'Web Development'"),
-                ("custom_daily_quests", "TEXT DEFAULT '[]'"),
-                ("daily_streak", "INTEGER DEFAULT 0"),
-                ("split_streak_21", "INTEGER DEFAULT 0"),
-                ("last_logged_date", "VARCHAR(20) DEFAULT ''"),
-                ("last_penalty_date", "VARCHAR(20) DEFAULT ''"),
-                ("last_logbook_date", "VARCHAR(20) DEFAULT ''"),
-                ("last_logbook_penalty_date", "VARCHAR(20) DEFAULT ''")
-            ]
-            for col_name, col_type in columns:
-                try:
-                    conn.execute(text(f"ALTER TABLE character ADD COLUMN {col_name} {col_type}"))
-                    conn.commit()
-                except Exception:
-                    pass
-    except Exception as e:
-        print("Schema migration info:", e)
+    columns = [
+        ("password", "VARCHAR(128) DEFAULT 'hunter123'"),
+        ("email", "VARCHAR(120) DEFAULT ''"),
+        ("google_id", "VARCHAR(120) DEFAULT ''"),
+        ("avatar_url", "VARCHAR(300) DEFAULT ''"),
+        ("selected_goals", "TEXT DEFAULT '[\"gym\"]'"),
+        ("workout_split", "TEXT DEFAULT '{}'"),
+        ("weight_goal_type", "VARCHAR(20) DEFAULT 'maintain'"),
+        ("current_weight", "FLOAT DEFAULT 75.0"),
+        ("target_weight", "FLOAT DEFAULT 75.0"),
+        ("onboarding_completed", "BOOLEAN DEFAULT FALSE"),
+        ("education_level", "VARCHAR(20) DEFAULT 'college'"),
+        ("education_detail", "VARCHAR(100) DEFAULT 'B.Tech Computer Science'"),
+        ("ecc_skill", "VARCHAR(100) DEFAULT 'Web Development'"),
+        ("custom_daily_quests", "TEXT DEFAULT '[]'"),
+        ("daily_streak", "INTEGER DEFAULT 0"),
+        ("split_streak_21", "INTEGER DEFAULT 0"),
+        ("last_logged_date", "VARCHAR(20) DEFAULT ''"),
+        ("last_penalty_date", "VARCHAR(20) DEFAULT ''"),
+        ("last_logbook_date", "VARCHAR(20) DEFAULT ''"),
+        ("last_logbook_penalty_date", "VARCHAR(20) DEFAULT ''")
+    ]
 
-    if not Character.query.first():
-        default_char = Character(name="Sung Jin-Woo", password="hunter123")
-        db.session.add(default_char)
-        db.session.commit()
+    with db.engine.begin() as conn:
+        existing = {column['name'] for column in inspect(conn).get_columns('character')}
+        for col_name, col_type in columns:
+            if col_name not in existing:
+                conn.execute(text(f"ALTER TABLE character ADD COLUMN {col_name} {col_type}"))
+        if db.engine.dialect.name == 'postgresql':
+            conn.execute(text('ALTER TABLE character ALTER COLUMN password TYPE TEXT'))
+        # Existing duplicates stop startup for manual reconciliation; no records are deleted.
+        conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_character_name_lower ON character (lower(name))'))
+        conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_logbook_day ON log_book (character_id, date)'))
+        conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_attendance_day ON attendance (character_id, date)'))
+        conn.execute(text('CREATE INDEX IF NOT EXISTS ix_task_account_time ON task (character_id, completed_at)'))
+        conn.execute(text('CREATE INDEX IF NOT EXISTS ix_weight_account_time ON weight_log (character_id, logged_at)'))
 
 
 if __name__ == '__main__':
