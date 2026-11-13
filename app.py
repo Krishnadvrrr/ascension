@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import math
 import time
+import certifi
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template, session
 from flask_sqlalchemy import SQLAlchemy
@@ -38,7 +39,7 @@ if database_url.startswith(('postgres://', 'postgresql://')):
 if os.environ.get('RENDER') and not database_url.startswith('postgresql'):
     raise RuntimeError('Configure a persistent PostgreSQL DATABASE_URL before deploying to Render.')
 if os.environ.get('RENDER'):
-    database_url = make_url(database_url).update_query_dict({'sslmode': 'verify-full', 'sslrootcert': 'system'}).render_as_string(hide_password=False)
+    database_url = make_url(database_url).update_query_dict({'sslmode': 'verify-full', 'sslrootcert': certifi.where()}).render_as_string(hide_password=False)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
