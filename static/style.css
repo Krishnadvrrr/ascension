@@ -576,6 +576,10 @@ body {
 /* =========================================
    2. 3D COMPACT LOGIN GATEWAY (Anime Faces Open)
    ========================================= */
+.login-gateway.hidden {
+  display: none !important;
+}
+
 .login-gateway {
   position: fixed;
   inset: 0;
