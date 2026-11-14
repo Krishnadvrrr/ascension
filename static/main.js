@@ -1,6 +1,8 @@
 let currentHunterId = 1;
 let currentHunterName = "Sung Jin-Woo";
 const BASE_URL = window.location.origin;
+// Phones and reduced-motion users get a lightweight interface from first load.
+const lightweightUI = window.matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
 // 1. Array of your custom anime wallpapers (pic1 to pic12)
@@ -23,6 +25,7 @@ let isBufferActive = false;
 
 // 2. Preload & smoothly crossfade wallpapers every 4.5 seconds
 function initBackgroundSlideshow() {
+  if (lightweightUI) return;
   const bgMain = document.getElementById("bg-slideshow");
   const bgBuffer = document.getElementById("bg-slideshow-buffer");
   if (!bgMain || backgroundImages.length === 0) return;
@@ -92,6 +95,7 @@ function getSharedAudioContext() {
 
 // 3. Futuristic Web Audio Synthesizer (No external sound files required)
 function playSystemSound(type = "login") {
+  if (lightweightUI) return;
   try {
     const ctx = getSharedAudioContext();
     if (!ctx) return;
@@ -359,6 +363,7 @@ async function quickRegisterDemo() {
 
 // 5. Interactive 3D Parallax Tilt & Specular Tracking for Login Card
 function init3DCardTilt() {
+  if (lightweightUI) return;
   const card = document.getElementById("tilt-login-card");
   if (!card) return;
 
@@ -414,6 +419,7 @@ function init3DCardTilt() {
 
 // Interactive Audio Feedback (Key clicks, input focus, button hover)
 function initInteractiveSounds() {
+  if (lightweightUI) return;
   // Mechanical typing sounds for inputs
   const inputs = document.querySelectorAll("input, textarea");
   inputs.forEach(input => {
@@ -438,6 +444,17 @@ function trigger3DWelcomeSequence(hunterName) {
   const hudContainer = document.getElementById("hud-container");
   const saluteTag = document.getElementById("cinematic-hunter-name");
   const text3D = document.querySelector(".text-3d-massive");
+
+  if (lightweightUI) {
+    loginGateway?.classList.add('hidden');
+    gateOverlay?.classList.add('hidden');
+    stage3D?.classList.add('hidden');
+    hudContainer?.classList.remove('hidden');
+    applyProfile({ name: hunterName });
+    loadCharacterData();
+    loadTasks();
+    return;
+  }
 
   // Play synthetic system resonance audio
   playSystemSound("login");
@@ -805,6 +822,7 @@ let manaCanvas, manaCtx;
 let manaParticles = [];
 
 function initManaParticleCanvas() {
+  if (lightweightUI) return;
   manaCanvas = document.getElementById("mana-particle-canvas");
   if (!manaCanvas) return;
   manaCtx = manaCanvas.getContext("2d");
@@ -2325,6 +2343,10 @@ let creatorIntroTimer = null;
 
 function initCreatorIntro() {
   const stage = document.getElementById("creator-intro-stage");
+  if (lightweightUI) {
+    stage?.classList.add('hidden');
+    return;
+  }
   const pBar = document.getElementById("creator-progress-bar");
   if (!stage) return;
 

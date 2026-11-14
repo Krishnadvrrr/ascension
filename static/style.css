@@ -4456,3 +4456,34 @@ body.in-red-gate .bg-overlay {
     font-size: 0.72rem !important;
   }
 }
+
+/* Lightweight mobile rendering: avoid continuous GPU work and large wallpaper downloads. */
+@media (max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    scroll-behavior: auto !important;
+    will-change: auto !important;
+  }
+  #bg-slideshow, #bg-slideshow-buffer, #mana-particle-canvas,
+  #opening-gate-overlay, #cinematic-3d-stage, #creator-intro-stage {
+    display: none !important;
+  }
+  body { background: #10091c; }
+  .login-gateway { perspective: none !important; }
+  .login-gateway.hidden { display: none !important; }
+  #tilt-login-card { transform: none !important; }
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+  button, .system-btn, .system-btn-secondary, .mobile-cta-btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  input[type='checkbox'] { min-width: 24px; min-height: 24px; }
+  .modal-overlay { overscroll-behavior: contain; }
+  .modal-content { max-height: calc(100dvh - 24px); overflow-y: auto; }
+}
